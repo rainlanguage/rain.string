@@ -1,2 +1,2 @@
-LibParseIsMaskTest:testIsMaskPastEnd(uint256,uint256,uint256) (runs: 256, μ: 16946, ~: 18867)
-LibParseIsMaskTest:testIsMaskReference(string,uint256,uint256) (runs: 256, μ: 8346, ~: 8396)
+LibParseCharIsMaskTest:testIsMaskPastEnd(uint256,uint256,uint256) (runs: 256, μ: 16949, ~: 19250)
+LibParseCharIsMaskTest:testIsMaskReference(string,uint256,uint256) (runs: 256, μ: 8346, ~: 8396)

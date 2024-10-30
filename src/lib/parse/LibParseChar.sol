@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 thedavidmeister
 pragma solidity ^0.8.25;
 
-library LibParseChars {
+library LibParseChar {
     /// Skip an unlimited number of chars until we find one that is not in the
     /// mask.
     function skipMask(uint256 cursor, uint256 end, uint256 mask) internal pure returns (uint256) {

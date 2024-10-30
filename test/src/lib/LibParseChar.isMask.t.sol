@@ -4,14 +4,14 @@ pragma solidity =0.8.25;
 
 import {Test} from "forge-std/Test.sol";
 
-import {LibParseChars} from "src/lib/parse/LibParseChars.sol";
+import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
 import {LibPointer, Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibBytes} from "rain.solmem/lib/LibBytes.sol";
-import {LibParseCharsSlow} from "test/lib/parse/LibParseCharsSlow.sol";
+import {LibParseCharSlow} from "test/lib/parse/LibParseCharSlow.sol";
 
-/// @title LibParseCharsIsMaskTest
+/// @title LibParseCharIsMaskTest
 /// @notice Tests that the isMask function works correctly.
-contract LibParseIsMaskTest is Test {
+contract LibParseCharIsMaskTest is Test {
     using LibBytes for bytes;
 
     /// Test that cursor at or past end is always false for isMask.
@@ -19,7 +19,7 @@ contract LibParseIsMaskTest is Test {
         // Limit to 16-bit values to avoid OOM reads.
         end = bound(end, 0, type(uint16).max);
         cursor = bound(cursor, end, type(uint16).max);
-        assertEq(LibParseChars.isMask(cursor, end, mask), 0);
+        assertEq(LibParseChar.isMask(cursor, end, mask), 0);
     }
 
     /// Test that isMask matches a reference implementation.
@@ -30,6 +30,6 @@ contract LibParseIsMaskTest is Test {
         uint256 cursor = Pointer.unwrap(bytes(s).dataPointer()) + index;
         uint256 end = Pointer.unwrap(bytes(s).endDataPointer());
 
-        assertEq(LibParseChars.isMask(cursor, end, mask), LibParseCharsSlow.isMaskSlow(cursor, end, mask));
+        assertEq(LibParseChar.isMask(cursor, end, mask), LibParseCharSlow.isMaskSlow(cursor, end, mask));
     }
 }

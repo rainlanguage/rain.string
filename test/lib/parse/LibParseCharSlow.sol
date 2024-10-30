@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 thedavidmeister
 pragma solidity ^0.8.25;
 
-library LibParseCharsSlow {
+library LibParseCharSlow {
     function isMaskSlow(uint256 cursor, uint256 end, uint256 mask) internal pure returns (uint256) {
         if (cursor < end) {
             uint256 wordAtCursor;
