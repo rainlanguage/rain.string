@@ -13,6 +13,15 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
 
+    /// Test that when start is greater than or equal to end, the function
+    /// fails.
+    function testUnsafeDecimalStrToIntEmpty(uint256 start, uint256 end) external pure {
+        start = bound(start, end, type(uint256).max);
+        (uint256 success, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(start, end);
+        assertEq(success, 0);
+        assertEq(result, 0);
+    }
+
     /// Test round tripping strings through the unsafeStrToInt function.
     function testUnsafeDecimalStrToIntRoundTrip(uint256 value, uint8 leadingZerosCount) external pure {
         string memory str = value.toString();
@@ -33,7 +42,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     }
 
     /// Test very large number overflow.
-    function testUnsafeDecimalStrToIntOverflowVeryLarge(uint256 high, uint256 low, uint8 leadingZerosCount) external pure {
+    function testUnsafeDecimalStrToIntOverflowVeryLarge(uint256 high, uint256 low, uint8 leadingZerosCount)
+        external
+        pure
+    {
         vm.assume(high > 0);
         low = bound(low, 1 << 0xFF, type(uint256).max);
         string memory strHigh = high.toString();

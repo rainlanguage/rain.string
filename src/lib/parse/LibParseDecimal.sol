@@ -19,6 +19,10 @@ library LibParseDecimal {
     /// distinguish between `0` and a failed conversion.
     function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (uint256, uint256) {
         unchecked {
+            if (start >= end) {
+                return (0, 0);
+            }
+
             // The ASCII byte can be translated to a numeric digit by subtracting
             // the digit offset.
             uint256 digitOffset = uint256(uint8(bytes1("0")));
