@@ -10,14 +10,14 @@ library LibParseDecimal {
     /// 18 decimal fixed point `uint256`.
     /// DOES NOT check that the string contains valid decimal characters. You can
     /// use `LibParseChar.skipMask` to easily bound some valid decimal characters.
-    /// DOES check for overflow in the fixed point representation.
+    /// DOES check for unsigned integer overflow.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
     /// @return Whether the conversion was successful. If `0`, this is
     /// due to an overflow, if `1` the conversion was successful.
-    /// @return The fixed point decimal representation of the ASCII string.
+    /// @return The unsigned integer representation of the ASCII string.
     /// ALWAYS check `success` before using `value`, otherwise you cannot
     /// distinguish between `0` and a failed conversion.
     function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (uint256, uint256) {
@@ -91,6 +91,17 @@ library LibParseDecimal {
         }
     }
 
+    /// @notice Convert a decimal ASCII string in a memory region to a signed
+    /// integer.
+    /// DOES NOT check that the string contains valid decimal characters and/or
+    /// a negative sign.
+    /// @param start The start of the memory region containing the decimal ASCII
+    /// string.
+    /// @param end The end of the memory region containing the decimal ASCII
+    /// string.
+    /// @return Whether the conversion was successful. If `0`, this is
+    /// due to an overflow, if `1` the conversion was successful.
+    /// @return The signed integer representation of the ASCII string.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (uint256, int256) {
         unchecked {
             uint256 cursor = start;
