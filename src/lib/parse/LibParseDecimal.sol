@@ -12,9 +12,9 @@ library LibParseDecimal {
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
-    /// @return success Whether the conversion was successful. If false, this is
+    /// @return Whether the conversion was successful. If false, this is
     /// due to an overflow.
-    /// @return value The fixed point decimal representation of the ASCII string.
+    /// @return The fixed point decimal representation of the ASCII string.
     /// ALWAYS check `success` before using `value`, otherwise you cannot
     /// distinguish between `0` and a failed conversion.
     function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (bool, uint256) {

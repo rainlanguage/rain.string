@@ -26,8 +26,8 @@ library LibParseChar {
     /// @param cursor The current position in the data.
     /// @param end The end of the data.
     /// @param mask The mask to check against.
-    /// @return `1` if the cursor points at a char of the given mask and is in
-    /// range of end, `0` otherwise.
+    /// @return result `1` if the cursor points at a char of the given mask and
+    /// is in range of end, `0` otherwise.
     function isMask(uint256 cursor, uint256 end, uint256 mask) internal pure returns (uint256 result) {
         assembly ("memory-safe") {
             //slither-disable-next-line incorrect-shift
