@@ -12,12 +12,12 @@ library LibParseDecimal {
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
-    /// @return Whether the conversion was successful. If false, this is
-    /// due to an overflow.
+    /// @return Whether the conversion was successful. If `0`, this is
+    /// due to an overflow, if `1` the conversion was successful.
     /// @return The fixed point decimal representation of the ASCII string.
     /// ALWAYS check `success` before using `value`, otherwise you cannot
     /// distinguish between `0` and a failed conversion.
-    function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (bool, uint256) {
+    function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (uint256, uint256) {
         unchecked {
             // The ASCII byte can be translated to a numeric digit by subtracting
             // the digit offset.
@@ -52,11 +52,11 @@ library LibParseDecimal {
                     // If the digit is greater than 1, then we know that
                     // multiplying it by 10^77 will overflow a uint256.
                     if (digit > 1) {
-                        return (false, 0);
+                        return (0, 0);
                     } else {
                         uint256 scaled = digit * (10 ** exponent);
                         if (value + scaled < value) {
-                            return (false, 0);
+                            return (0, 0);
                         }
                         value += scaled;
                     }
@@ -73,14 +73,14 @@ library LibParseDecimal {
                             decimalCharByte := byte(0, mload(cursor))
                         }
                         if (decimalCharByte != uint256(uint8(bytes1("0")))) {
-                            return (false, 0);
+                            return (0, 0);
                         }
                         cursor--;
                     }
                 }
             }
 
-            return (true, value);
+            return (1, value);
         }
     }
 }
