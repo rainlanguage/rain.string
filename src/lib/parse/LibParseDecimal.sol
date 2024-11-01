@@ -2,6 +2,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 thedavidmeister
 pragma solidity ^0.8.25;
 
+import {CMASK_NEGATIVE_SIGN} from "./LibParseCMask.sol";
+import {LibParseChar} from "./LibParseChar.sol";
+
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to an
     /// 18 decimal fixed point `uint256`.
@@ -85,6 +88,28 @@ library LibParseDecimal {
             }
 
             return (1, value);
+        }
+    }
+
+    function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (uint256, int256) {
+        unchecked {
+            uint256 cursor = start;
+            uint256 isNeg = LibParseChar.isMask(cursor, end, CMASK_NEGATIVE_SIGN);
+            cursor += isNeg;
+
+            (uint256 success, uint256 value) = LibParseDecimal.unsafeDecimalStringToInt(cursor, end);
+            // Handle failure.
+            if (success == 0) {
+                return (0, 0);
+            }
+
+            // Handle positive value.
+            if (isNeg == 0) {
+                return (value > uint256(type(int256).max) ? 0 : 1, int256(value));
+            }
+
+            // Fallback to negative value.
+            return (value > uint256(type(int256).max) + 1 ? 0 : 1, -int256(value));
         }
     }
 }
