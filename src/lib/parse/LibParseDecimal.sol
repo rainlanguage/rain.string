@@ -4,6 +4,7 @@ pragma solidity ^0.8.25;
 
 import {CMASK_NEGATIVE_SIGN} from "./LibParseCMask.sol";
 import {LibParseChar} from "./LibParseChar.sol";
+import {ParseDecimalOverflow, ParseEmptyDecimalString} from "../../error/ErrParse.sol";
 
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to an
@@ -15,15 +16,13 @@ library LibParseDecimal {
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
-    /// @return Whether the conversion was successful. If `0`, this is
-    /// due to an overflow, if `1` the conversion was successful.
+    /// @return The error selector if the conversion failed, `0` otherwise.
     /// @return The unsigned integer representation of the ASCII string.
-    /// ALWAYS check `success` before using `value`, otherwise you cannot
-    /// distinguish between `0` and a failed conversion.
-    function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (uint256, uint256) {
+    /// ALWAYS check the error selector before using the value.
+    function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (bytes4, uint256) {
         unchecked {
             if (start >= end) {
-                return (0, 0);
+                return (ParseEmptyDecimalString.selector, 0);
             }
 
             // The ASCII byte can be translated to a numeric digit by subtracting
@@ -59,11 +58,11 @@ library LibParseDecimal {
                     // If the digit is greater than 1, then we know that
                     // multiplying it by 10^77 will overflow a uint256.
                     if (digit > 1) {
-                        return (0, 0);
+                        return (ParseDecimalOverflow.selector, 0);
                     } else {
                         uint256 scaled = digit * (10 ** exponent);
                         if (value + scaled < value) {
-                            return (0, 0);
+                            return (ParseDecimalOverflow.selector, 0);
                         }
                         value += scaled;
                     }
@@ -80,14 +79,14 @@ library LibParseDecimal {
                             decimalCharByte := byte(0, mload(cursor))
                         }
                         if (decimalCharByte != uint256(uint8(bytes1("0")))) {
-                            return (0, 0);
+                            return (ParseDecimalOverflow.selector, 0);
                         }
                         cursor--;
                     }
                 }
             }
 
-            return (1, value);
+            return (bytes4(0), value);
         }
     }
 
@@ -102,25 +101,25 @@ library LibParseDecimal {
     /// @return Whether the conversion was successful. If `0`, this is
     /// due to an overflow, if `1` the conversion was successful.
     /// @return The signed integer representation of the ASCII string.
-    function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (uint256, int256) {
+    function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {
         unchecked {
             uint256 cursor = start;
             uint256 isNeg = LibParseChar.isMask(cursor, end, CMASK_NEGATIVE_SIGN);
             cursor += isNeg;
 
-            (uint256 success, uint256 value) = LibParseDecimal.unsafeDecimalStringToInt(cursor, end);
+            (bytes4 errorSelector, uint256 value) = LibParseDecimal.unsafeDecimalStringToInt(cursor, end);
             // Handle failure.
-            if (success == 0) {
-                return (0, 0);
+            if (errorSelector != bytes4(0)) {
+                return (errorSelector, 0);
             }
 
             // Handle positive value.
             if (isNeg == 0) {
-                return (value > uint256(type(int256).max) ? 0 : 1, int256(value));
+                return (value > uint256(type(int256).max) ? ParseDecimalOverflow.selector : bytes4(0), int256(value));
             }
 
             // Fallback to negative value.
-            return (value > uint256(type(int256).max) + 1 ? 0 : 1, -int256(value));
+            return (value > uint256(type(int256).max) + 1 ? ParseDecimalOverflow.selector : bytes4(0), -int256(value));
         }
     }
 }

@@ -6,6 +6,7 @@ import {Test} from "forge-std/Test.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain.solmem/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
+import {ParseDecimalOverflow} from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToSignedInt
 contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
@@ -23,10 +24,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
         string memory input = string(abi.encodePacked((isNeg ? "-" : ""), leadingZeros, str));
 
-        (uint256 success, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
-        assertEq(success, 1);
+        assertEq(errorSelector, bytes4(0));
 
         if (isNeg) {
             if (result == type(int256).min) {
@@ -51,10 +52,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
         string memory input = string(abi.encodePacked(leadingZeros, str));
 
-        (uint256 success,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
-        assertEq(success, 0);
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
     }
 
     /// Test negative overflow.
@@ -69,9 +70,9 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
         string memory input = string(abi.encodePacked("-", leadingZeros, str));
 
-        (uint256 success,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
-        assertEq(success, 0);
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
     }
 }
