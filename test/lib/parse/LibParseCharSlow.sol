@@ -9,6 +9,7 @@ library LibParseCharSlow {
             assembly ("memory-safe") {
                 wordAtCursor := mload(cursor)
             }
+            // forge-lint: disable-next-line(incorrect-shift)
             if ((1 << uint256(wordAtCursor >> 0xF8)) & mask == 0) {
                 break;
             }
@@ -23,6 +24,7 @@ library LibParseCharSlow {
             assembly ("memory-safe") {
                 wordAtCursor := mload(cursor)
             }
+            // forge-lint: disable-next-line(incorrect-shift)
             return (1 << uint256(wordAtCursor >> 0xF8)) & mask > 0 ? 1 : 0;
         } else {
             return 0;
