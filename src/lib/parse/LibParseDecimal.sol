@@ -7,8 +7,8 @@ import {LibParseChar} from "./LibParseChar.sol";
 import {ParseDecimalOverflow, ParseEmptyDecimalString} from "../../error/ErrParse.sol";
 
 library LibParseDecimal {
-    /// @notice Convert a decimal ASCII string in a memory region to an
-    /// 18 decimal fixed point `uint256`.
+    /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
+    /// integer.
     /// DOES NOT check that the string contains valid decimal characters. You can
     /// use `LibParseChar.skipMask` to easily bound some valid decimal characters.
     /// DOES check for unsigned integer overflow.

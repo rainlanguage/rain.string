@@ -10,7 +10,7 @@ Generally parsing in rainlang works like a bloom filter on individual characters
 We read characters from memory one byte at a time then bit shift to compare it
 against a bitmap mask that represents characters of interest. For example we
 might need to know if a character is numeric `0-9` or alphanumeric `a-zA-Z0-9`,
-and we cannot rely on regexes, in memory sets, or even loops, that might be
+and we cannot rely on regexes, in-memory sets, or even loops, that might be
 easily at hand for similar tasks in other languages.
 
 Luckily, EVM values are 32 bytes and so we can fit all posssible ASCII characters
