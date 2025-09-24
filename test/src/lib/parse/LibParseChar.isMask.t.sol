@@ -5,7 +5,7 @@ pragma solidity =0.8.25;
 import {Test} from "forge-std/Test.sol";
 
 import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
-import {LibPointer, Pointer} from "rain.solmem/lib/LibPointer.sol";
+import {Pointer} from "rain.solmem/lib/LibPointer.sol";
 import {LibBytes} from "rain.solmem/lib/LibBytes.sol";
 import {LibParseCharSlow} from "test/lib/parse/LibParseCharSlow.sol";
 

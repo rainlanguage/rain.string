@@ -29,6 +29,7 @@ library LibConformString {
         for (uint256 i = 0; i < bytes(str).length; i++) {
             uint256 char = uint256(uint8(bytes(str)[i]));
             // If the char is not in the mask, roll it.
+            // forge-lint: disable-next-line(incorrect-shift)
             while (1 << char & mask == 0) {
                 assembly ("memory-safe") {
                     mstore(0, char)
@@ -39,6 +40,7 @@ library LibConformString {
                     char := mod(byte(0, seed), max)
                 }
             }
+            // forge-lint: disable-next-line(unsafe-typecast)
             bytes(str)[i] = bytes1(uint8(char));
         }
     }
@@ -82,6 +84,7 @@ library LibConformString {
     function corruptSingleChar(string memory str, uint256 index) internal pure {
         uint256 char = uint256(uint8(bytes(str)[index]));
         uint256 seed = 0;
+        // forge-lint: disable-next-line(unsafe-typecast,incorrect-shift)
         while (1 << char & ~CMASK_STRING_LITERAL_TAIL == 0 || char == uint8(bytes1("\""))) {
             assembly ("memory-safe") {
                 mstore(0, char)
@@ -90,6 +93,7 @@ library LibConformString {
                 char := byte(0, seed)
             }
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         bytes(str)[index] = bytes1(uint8(char));
     }
 
@@ -101,6 +105,7 @@ library LibConformString {
     /// @return The generated character.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
         uint256 char = 0;
+        // forge-lint: disable-next-line(incorrect-shift)
         while (1 << char & mask == 0) {
             assembly ("memory-safe") {
                 mstore(0, char)
@@ -109,6 +114,7 @@ library LibConformString {
                 char := byte(0, seed)
             }
         }
+        // forge-lint: disable-next-line(unsafe-typecast)
         return bytes1(uint8(char));
     }
 }

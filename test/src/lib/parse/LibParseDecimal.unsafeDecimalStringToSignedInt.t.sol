@@ -13,6 +13,29 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
 
+    function checkUnsafeStrToSignedInt(string memory input, int256 expected) internal pure {
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+        assertEq(errorSelector, bytes4(0));
+        assertEq(result, expected);
+    }
+
+    function testUnsafeStrToSignedIntExamples() external pure {
+        checkUnsafeStrToSignedInt("123", 123);
+        checkUnsafeStrToSignedInt("-123", -123);
+        checkUnsafeStrToSignedInt("0", 0);
+        checkUnsafeStrToSignedInt("-0", 0);
+        checkUnsafeStrToSignedInt("123456789012345678901234567890", 123456789012345678901234567890);
+        checkUnsafeStrToSignedInt("-123456789012345678901234567890", -123456789012345678901234567890);
+        checkUnsafeStrToSignedInt(
+            "57896044618658097711785492504343953926634992332820282019728792003956564819967", type(int256).max
+        );
+        checkUnsafeStrToSignedInt(
+            "-57896044618658097711785492504343953926634992332820282019728792003956564819968", type(int256).min
+        );
+    }
+
     function testUnsafeStrToSignedIntRoundTrip(uint256 value, uint8 leadingZerosCount, bool isNeg) external pure {
         value = bound(value, 0, uint256(type(int256).max) + (isNeg ? 1 : 0));
         string memory str = value.toString();
@@ -33,9 +56,11 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
             if (result == type(int256).min) {
                 assertEq(value, uint256(type(int256).max) + 1);
             } else {
+                // forge-lint: disable-next-line(unsafe-typecast)
                 assertEq(result, -int256(value));
             }
         } else {
+            // forge-lint: disable-next-line(unsafe-typecast)
             assertEq(result, int256(value));
         }
     }

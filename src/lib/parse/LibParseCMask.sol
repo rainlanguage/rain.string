@@ -6,387 +6,515 @@ pragma solidity ^0.8.25;
 contract LibParseCMask {}
 
 /// @dev ASCII null
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_NULL = uint128(1) << uint128(uint8(bytes1("\x00")));
 
 /// @dev ASCII start of heading
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_START_OF_HEADING = uint128(1) << uint128(uint8(bytes1("\x01")));
 
 /// @dev ASCII start of text
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_START_OF_TEXT = uint128(1) << uint128(uint8(bytes1("\x02")));
 
 /// @dev ASCII end of text
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_END_OF_TEXT = uint128(1) << uint128(uint8(bytes1("\x03")));
 
 /// @dev ASCII end of transmission
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_END_OF_TRANSMISSION = uint128(1) << uint128(uint8(bytes1("\x04")));
 
 /// @dev ASCII enquiry
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ENQUIRY = uint128(1) << uint128(uint8(bytes1("\x05")));
 
 /// @dev ASCII acknowledge
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ACKNOWLEDGE = uint128(1) << uint128(uint8(bytes1("\x06")));
 
 /// @dev ASCII bell
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_BELL = uint128(1) << uint128(uint8(bytes1("\x07")));
 
 /// @dev ASCII backspace
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_BACKSPACE = uint128(1) << uint128(uint8(bytes1("\x08")));
 
 /// @dev ASCII horizontal tab
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_HORIZONTAL_TAB = uint128(1) << uint128(uint8(bytes1("\t")));
 
 /// @dev ASCII line feed
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LINE_FEED = uint128(1) << uint128(uint8(bytes1("\n")));
 
 /// @dev ASCII vertical tab
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_VERTICAL_TAB = uint128(1) << uint128(uint8(bytes1("\x0B")));
 
 /// @dev ASCII form feed
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_FORM_FEED = uint128(1) << uint128(uint8(bytes1("\x0C")));
 
 /// @dev ASCII carriage return
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_CARRIAGE_RETURN = uint128(1) << uint128(uint8(bytes1("\r")));
 
 /// @dev ASCII shift out
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SHIFT_OUT = uint128(1) << uint128(uint8(bytes1("\x0E")));
 
 /// @dev ASCII shift in
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SHIFT_IN = uint128(1) << uint128(uint8(bytes1("\x0F")));
 
 /// @dev ASCII data link escape
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DATA_LINK_ESCAPE = uint128(1) << uint128(uint8(bytes1("\x10")));
 
 /// @dev ASCII device control 1
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DEVICE_CONTROL_1 = uint128(1) << uint128(uint8(bytes1("\x11")));
 
 /// @dev ASCII device control 2
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DEVICE_CONTROL_2 = uint128(1) << uint128(uint8(bytes1("\x12")));
 
 /// @dev ASCII device control 3
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DEVICE_CONTROL_3 = uint128(1) << uint128(uint8(bytes1("\x13")));
 
 /// @dev ASCII device control 4
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DEVICE_CONTROL_4 = uint128(1) << uint128(uint8(bytes1("\x14")));
 
 /// @dev ASCII negative acknowledge
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_NEGATIVE_ACKNOWLEDGE = uint128(1) << uint128(uint8(bytes1("\x15")));
 
 /// @dev ASCII synchronous idle
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SYNCHRONOUS_IDLE = uint128(1) << uint128(uint8(bytes1("\x16")));
 
 /// @dev ASCII end of transmission block
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_END_OF_TRANSMISSION_BLOCK = uint128(1) << uint128(uint8(bytes1("\x17")));
 
 /// @dev ASCII cancel
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_CANCEL = uint128(1) << uint128(uint8(bytes1("\x18")));
 
 /// @dev ASCII end of medium
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_END_OF_MEDIUM = uint128(1) << uint128(uint8(bytes1("\x19")));
 
 /// @dev ASCII substitute
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SUBSTITUTE = uint128(1) << uint128(uint8(bytes1("\x1A")));
 
 /// @dev ASCII escape
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ESCAPE = uint128(1) << uint128(uint8(bytes1("\x1B")));
 
 /// @dev ASCII file separator
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_FILE_SEPARATOR = uint128(1) << uint128(uint8(bytes1("\x1C")));
 
 /// @dev ASCII group separator
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_GROUP_SEPARATOR = uint128(1) << uint128(uint8(bytes1("\x1D")));
 
 /// @dev ASCII record separator
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_RECORD_SEPARATOR = uint128(1) << uint128(uint8(bytes1("\x1E")));
 
 /// @dev ASCII unit separator
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UNIT_SEPARATOR = uint128(1) << uint128(uint8(bytes1("\x1F")));
 
 /// @dev ASCII space
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SPACE = uint128(1) << uint128(uint8(bytes1(" ")));
 
 /// @dev ASCII !
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_EXCLAMATION_MARK = uint128(1) << uint128(uint8(bytes1("!")));
 
 /// @dev ASCII "
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_QUOTATION_MARK = uint128(1) << uint128(uint8(bytes1("\"")));
 
 /// @dev ASCII #
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_NUMBER_SIGN = uint128(1) << uint128(uint8(bytes1("#")));
 
 /// @dev ASCII $
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DOLLAR_SIGN = uint128(1) << uint128(uint8(bytes1("$")));
 
 /// @dev ASCII %
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_PERCENT_SIGN = uint128(1) << uint128(uint8(bytes1("%")));
 
 /// @dev ASCII &
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_AMPERSAND = uint128(1) << uint128(uint8(bytes1("&")));
 
 /// @dev ASCII '
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_APOSTROPHE = uint128(1) << uint128(uint8(bytes1("'")));
 
 /// @dev ASCII (
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LEFT_PAREN = uint128(1) << uint128(uint8(bytes1("(")));
 
 /// @dev ASCII )
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_RIGHT_PAREN = uint128(1) << uint128(uint8(bytes1(")")));
 
 /// @dev ASCII *
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ASTERISK = uint128(1) << uint128(uint8(bytes1("*")));
 
 /// @dev ASCII +
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_PLUS_SIGN = uint128(1) << uint128(uint8(bytes1("+")));
 
 /// @dev ASCII ,
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_COMMA = uint128(1) << uint128(uint8(bytes1(",")));
 
 /// @dev ASCII -
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DASH = uint128(1) << uint128(uint8(bytes1("-")));
 
 /// @dev ASCII .
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_FULL_STOP = uint128(1) << uint128(uint8(bytes1(".")));
 
 /// @dev ASCII /
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SLASH = uint128(1) << uint128(uint8(bytes1("/")));
 
 /// @dev ASCII 0
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ZERO = uint128(1) << uint128(uint8(bytes1("0")));
 
 /// @dev ASCII 1
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_ONE = uint128(1) << uint128(uint8(bytes1("1")));
 
 /// @dev ASCII 2
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_TWO = uint128(1) << uint128(uint8(bytes1("2")));
 
 /// @dev ASCII 3
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_THREE = uint128(1) << uint128(uint8(bytes1("3")));
 
 /// @dev ASCII 4
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_FOUR = uint128(1) << uint128(uint8(bytes1("4")));
 
 /// @dev ASCII 5
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_FIVE = uint128(1) << uint128(uint8(bytes1("5")));
 
 /// @dev ASCII 6
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SIX = uint128(1) << uint128(uint8(bytes1("6")));
 
 /// @dev ASCII 7
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SEVEN = uint128(1) << uint128(uint8(bytes1("7")));
 
 /// @dev ASCII 8
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_EIGHT = uint128(1) << uint128(uint8(bytes1("8")));
 
 /// @dev ASCII 9
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_NINE = uint128(1) << uint128(uint8(bytes1("9")));
 
 /// @dev ASCII :
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_COLON = uint128(1) << uint128(uint8(bytes1(":")));
 
 /// @dev ASCII ;
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_SEMICOLON = uint128(1) << uint128(uint8(bytes1(";")));
 
 /// @dev ASCII <
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LESS_THAN_SIGN = uint128(1) << uint128(uint8(bytes1("<")));
 
 /// @dev ASCII =
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_EQUALS_SIGN = uint128(1) << uint128(uint8(bytes1("=")));
 
 /// @dev ASCII >
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_GREATER_THAN_SIGN = uint128(1) << uint128(uint8(bytes1(">")));
 
 /// @dev ASCII ?
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_QUESTION_MARK = uint128(1) << uint128(uint8(bytes1("?")));
 
 /// @dev ASCII @
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_AT_SIGN = uint128(1) << uint128(uint8(bytes1("@")));
 
 /// @dev ASCII A
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_A = uint128(1) << uint128(uint8(bytes1("A")));
 
 /// @dev ASCII B
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_B = uint128(1) << uint128(uint8(bytes1("B")));
 
 /// @dev ASCII C
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_C = uint128(1) << uint128(uint8(bytes1("C")));
 
 /// @dev ASCII D
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_D = uint128(1) << uint128(uint8(bytes1("D")));
 
 /// @dev ASCII E
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_E = uint128(1) << uint128(uint8(bytes1("E")));
 
 /// @dev ASCII F
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_F = uint128(1) << uint128(uint8(bytes1("F")));
 
 /// @dev ASCII G
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_G = uint128(1) << uint128(uint8(bytes1("G")));
 
 /// @dev ASCII H
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_H = uint128(1) << uint128(uint8(bytes1("H")));
 
 /// @dev ASCII I
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_I = uint128(1) << uint128(uint8(bytes1("I")));
 
 /// @dev ASCII J
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_J = uint128(1) << uint128(uint8(bytes1("J")));
 
 /// @dev ASCII K
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_K = uint128(1) << uint128(uint8(bytes1("K")));
 
 /// @dev ASCII L
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_L = uint128(1) << uint128(uint8(bytes1("L")));
 
 /// @dev ASCII M
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_M = uint128(1) << uint128(uint8(bytes1("M")));
 
 /// @dev ASCII N
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_N = uint128(1) << uint128(uint8(bytes1("N")));
 
 /// @dev ASCII O
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_O = uint128(1) << uint128(uint8(bytes1("O")));
 
 /// @dev ASCII P
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_P = uint128(1) << uint128(uint8(bytes1("P")));
 
 /// @dev ASCII Q
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_Q = uint128(1) << uint128(uint8(bytes1("Q")));
 
 /// @dev ASCII R
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_R = uint128(1) << uint128(uint8(bytes1("R")));
 
 /// @dev ASCII S
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_S = uint128(1) << uint128(uint8(bytes1("S")));
 
 /// @dev ASCII T
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_T = uint128(1) << uint128(uint8(bytes1("T")));
 
 /// @dev ASCII U
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_U = uint128(1) << uint128(uint8(bytes1("U")));
 
 /// @dev ASCII V
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_V = uint128(1) << uint128(uint8(bytes1("V")));
 
 /// @dev ASCII W
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_W = uint128(1) << uint128(uint8(bytes1("W")));
 
 /// @dev ASCII X
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_X = uint128(1) << uint128(uint8(bytes1("X")));
 
 /// @dev ASCII Y
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_Y = uint128(1) << uint128(uint8(bytes1("Y")));
 
 /// @dev ASCII Z
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UPPER_Z = uint128(1) << uint128(uint8(bytes1("Z")));
 
 /// @dev ASCII [
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LEFT_SQUARE_BRACKET = uint128(1) << uint128(uint8(bytes1("[")));
 
 /// @dev ASCII \
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_BACKSLASH = uint128(1) << uint128(uint8(bytes1("\\")));
 
 /// @dev ASCII ]
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_RIGHT_SQUARE_BRACKET = uint128(1) << uint128(uint8(bytes1("]")));
 
 /// @dev ASCII ^
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_CIRCUMFLEX_ACCENT = uint128(1) << uint128(uint8(bytes1("^")));
 
 /// @dev ASCII _
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_UNDERSCORE = uint128(1) << uint128(uint8(bytes1("_")));
 
 /// @dev ASCII `
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_GRAVE_ACCENT = uint128(1) << uint128(uint8(bytes1("`")));
 
 /// @dev ASCII a
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_A = uint128(1) << uint128(uint8(bytes1("a")));
 
 /// @dev ASCII b
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_B = uint128(1) << uint128(uint8(bytes1("b")));
 
 /// @dev ASCII c
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_C = uint128(1) << uint128(uint8(bytes1("c")));
 
 /// @dev ASCII d
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_D = uint128(1) << uint128(uint8(bytes1("d")));
 
 /// @dev ASCII e
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_E = uint128(1) << uint128(uint8(bytes1("e")));
 
 /// @dev ASCII f
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_F = uint128(1) << uint128(uint8(bytes1("f")));
 
 /// @dev ASCII g
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_G = uint128(1) << uint128(uint8(bytes1("g")));
 
 /// @dev ASCII h
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_H = uint128(1) << uint128(uint8(bytes1("h")));
 
 /// @dev ASCII i
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_I = uint128(1) << uint128(uint8(bytes1("i")));
 
 /// @dev ASCII j
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_J = uint128(1) << uint128(uint8(bytes1("j")));
 
 /// @dev ASCII k
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_K = uint128(1) << uint128(uint8(bytes1("k")));
 
 /// @dev ASCII l
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_L = uint128(1) << uint128(uint8(bytes1("l")));
 
 /// @dev ASCII m
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_M = uint128(1) << uint128(uint8(bytes1("m")));
 
 /// @dev ASCII n
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_N = uint128(1) << uint128(uint8(bytes1("n")));
 
 /// @dev ASCII o
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_O = uint128(1) << uint128(uint8(bytes1("o")));
 
 /// @dev ASCII p
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_P = uint128(1) << uint128(uint8(bytes1("p")));
 
 /// @dev ASCII q
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_Q = uint128(1) << uint128(uint8(bytes1("q")));
 
 /// @dev ASCII r
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_R = uint128(1) << uint128(uint8(bytes1("r")));
 
 /// @dev ASCII s
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_S = uint128(1) << uint128(uint8(bytes1("s")));
 
 /// @dev ASCII t
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_T = uint128(1) << uint128(uint8(bytes1("t")));
 
 /// @dev ASCII u
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_U = uint128(1) << uint128(uint8(bytes1("u")));
 
 /// @dev ASCII v
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_V = uint128(1) << uint128(uint8(bytes1("v")));
 
 /// @dev ASCII w
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_W = uint128(1) << uint128(uint8(bytes1("w")));
 
 /// @dev ASCII x
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_X = uint128(1) << uint128(uint8(bytes1("x")));
 
 /// @dev ASCII y
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_Y = uint128(1) << uint128(uint8(bytes1("y")));
 
 /// @dev ASCII z
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LOWER_Z = uint128(1) << uint128(uint8(bytes1("z")));
 
 /// @dev ASCII {
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_LEFT_CURLY_BRACKET = uint128(1) << uint128(uint8(bytes1("{")));
 
 /// @dev ASCII |
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_VERTICAL_BAR = uint128(1) << uint128(uint8(bytes1("|")));
 
 /// @dev ASCII }
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_RIGHT_CURLY_BRACKET = uint128(1) << uint128(uint8(bytes1("}")));
 
 /// @dev ASCII ~
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_TILDE = uint128(1) << uint128(uint8(bytes1("~")));
 
 /// @dev ASCII delete
+// forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DELETE = uint128(1) << uint128(uint8(bytes1("\x7F")));
 
 /// @dev ASCII printable characters is everything 0x20 and above, except 0x7F
@@ -501,9 +629,11 @@ uint128 constant CMASK_COMMENT_HEAD = CMASK_SLASH;
 uint128 constant CMASK_INTERSTITIAL_HEAD = CMASK_WHITESPACE | CMASK_COMMENT_HEAD;
 
 /// @dev Rainlang comment starting sequence is /*
+// forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant COMMENT_START_SEQUENCE = uint256(uint16(bytes2("/*")));
 
 /// @dev Rainlang comment ending sequence is */
+// forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant COMMENT_END_SEQUENCE = uint256(uint16(bytes2("*/")));
 
 /// @dev Rainlang comment end sequence end byte is / */
@@ -516,4 +646,5 @@ uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 uint128 constant CMASK_LITERAL_HEX_DISPATCH = CMASK_ZERO | CMASK_LOWER_X;
 
 /// @dev We may want to match the exact start of a hex literal.
+// forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant CMASK_LITERAL_HEX_DISPATCH_START = uint256(uint16(bytes2("0x")));

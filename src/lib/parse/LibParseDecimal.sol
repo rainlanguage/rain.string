@@ -27,6 +27,7 @@ library LibParseDecimal {
 
             // The ASCII byte can be translated to a numeric digit by subtracting
             // the digit offset.
+            // forge-lint: disable-next-line(unsafe-typecast)
             uint256 digitOffset = uint256(uint8(bytes1("0")));
             uint256 exponent = 0;
             uint256 cursor;
@@ -78,6 +79,7 @@ library LibParseDecimal {
                         assembly ("memory-safe") {
                             decimalCharByte := byte(0, mload(cursor))
                         }
+                        // forge-lint: disable-next-line(unsafe-typecast)
                         if (decimalCharByte != uint256(uint8(bytes1("0")))) {
                             return (ParseDecimalOverflow.selector, 0);
                         }
@@ -115,10 +117,19 @@ library LibParseDecimal {
 
             // Handle positive value.
             if (isNeg == 0) {
+                // typecast is safe because we know that value is less than or equal
+                // to type(int256).max.
+                // forge-lint: disable-next-line(unsafe-typecast)
                 return (value > uint256(type(int256).max) ? ParseDecimalOverflow.selector : bytes4(0), int256(value));
             }
 
             // Fallback to negative value.
+            // typecast is safe because we know that value is less than or equal
+            // to type(int256).max + 1.
+            // This looks bad if `value == type(int256).max + 1`, because that is
+            // an overflow, but we do get the correct result, and there is a test
+            // for that.
+            // forge-lint: disable-next-line(unsafe-typecast)
             return (value > uint256(type(int256).max) + 1 ? ParseDecimalOverflow.selector : bytes4(0), -int256(value));
         }
     }
