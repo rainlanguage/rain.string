@@ -6,8 +6,18 @@ import {Test} from "forge-std/Test.sol";
 
 import {LibConformString} from "src/lib/mut/LibConformString.sol";
 import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
+import {EmptyStringMask} from "src/error/ErrConform.sol";
 
 contract LibConformStringTest is Test {
+    function externalConformStringToMask(string memory str, uint256 mask, uint256 max) external pure {
+        LibConformString.conformStringToMask(str, mask, max);
+    }
+
+    function testConformStringZeroMaskRevert(string memory s, uint256 max) external {
+        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
+        this.externalConformStringToMask(s, 0, max);
+    }
+
     function testConformStringFuzz(string memory s, uint256 mask) external pure {
         vm.assume(mask != 0);
 

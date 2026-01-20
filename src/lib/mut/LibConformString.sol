@@ -108,6 +108,9 @@ library LibConformString {
     /// @param mask The character mask to conform to.
     /// @return The generated character.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
+        if (mask == 0) {
+            revert EmptyStringMask();
+        }
         uint256 char = 0;
         // forge-lint: disable-next-line(incorrect-shift)
         while (1 << char & mask == 0) {
