@@ -6,13 +6,23 @@ import {Test} from "forge-std/Test.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain.solmem/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
-import {ParseEmptyDecimalString, ParseDecimalOverflow} from "src/error/ErrParse.sol";
+import {ParseEmptyDecimalString, ParseDecimalOverflow, ZeroStringStartPointer} from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToInt
 /// @dev Test `TestLibParseDecimal.unsafeDecimalStringToInt`
 contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
+
+    function externalTestZeroStringStartPointer(uint256 end) external pure {
+        LibParseDecimal.unsafeDecimalStringToInt(0, end);
+    }
+
+    function testExternalTestZeroStringStartPointer(uint256 end) external {
+        vm.assume(end > 0);
+        vm.expectRevert(abi.encodeWithSelector(ZeroStringStartPointer.selector));
+        this.externalTestZeroStringStartPointer(end);
+    }
 
     /// Test that when start is greater than or equal to end, the function
     /// fails.
