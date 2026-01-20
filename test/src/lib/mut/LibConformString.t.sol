@@ -6,8 +6,27 @@ import {Test} from "forge-std/Test.sol";
 
 import {LibConformString} from "src/lib/mut/LibConformString.sol";
 import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
+import {EmptyStringMask} from "src/error/ErrConform.sol";
 
 contract LibConformStringTest is Test {
+    function externalConformStringToMask(string memory str, uint256 mask, uint256 max) external pure {
+        LibConformString.conformStringToMask(str, mask, max);
+    }
+
+    function externalCharFromMask(uint256 seed, uint256 mask) external pure returns (bytes1) {
+        return LibConformString.charFromMask(seed, mask);
+    }
+
+    function testConformStringZeroMaskRevert(string memory s, uint256 max) external {
+        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
+        this.externalConformStringToMask(s, 0, max);
+    }
+
+    function testCharFromZeroMaskRevert(uint256 seed) external {
+        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
+        this.externalCharFromMask(seed, 0);
+    }
+
     function testConformStringFuzz(string memory s, uint256 mask) external pure {
         vm.assume(mask != 0);
 
@@ -23,5 +42,32 @@ contract LibConformStringTest is Test {
         cursor = LibParseChar.skipMask(cursor, end, mask);
 
         assertEq(cursor, end);
+    }
+
+    function testCharFromMask(uint256 seed, uint256 mask) external pure {
+        vm.assume(mask != 0);
+
+        bytes1 c = LibConformString.charFromMask(seed, mask);
+
+        uint256 char = uint256(uint8(c));
+        // forge-lint: disable-next-line(incorrect-shift)
+        assertTrue((1 << char) & mask != 0);
+
+        string memory s = new string(1);
+        bytes(s)[0] = c;
+
+        string memory sInit = new string(1);
+        bytes(sInit)[0] = c;
+
+        LibConformString.conformStringToMask(s, mask, 0x100);
+        assertEq(s, sInit);
+
+        uint256 sInitPointer;
+        uint256 sPointer;
+        assembly ("memory-safe") {
+            sInitPointer := sInit
+            sPointer := s
+        }
+        assertTrue(sPointer != sInitPointer);
     }
 }

@@ -3,6 +3,7 @@
 pragma solidity ^0.8.18;
 
 import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../parse/LibParseCMask.sol";
+import {EmptyStringMask} from "../../error/ErrConform.sol";
 
 /// @title LibConformString
 /// @notice A library for conforming strings to character masks. This involves
@@ -25,6 +26,9 @@ library LibConformString {
     /// @param max The maximum character value to generate. This is used to
     /// limit the range of characters that are generated.
     function conformStringToMask(string memory str, uint256 mask, uint256 max) internal pure {
+        if (mask == 0) {
+            revert EmptyStringMask();
+        }
         uint256 seed = 0;
         for (uint256 i = 0; i < bytes(str).length; i++) {
             uint256 char = uint256(uint8(bytes(str)[i]));
@@ -104,6 +108,9 @@ library LibConformString {
     /// @param mask The character mask to conform to.
     /// @return The generated character.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
+        if (mask == 0) {
+            revert EmptyStringMask();
+        }
         uint256 char = 0;
         // forge-lint: disable-next-line(incorrect-shift)
         while (1 << char & mask == 0) {
