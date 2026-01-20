@@ -1,4 +1,4 @@
-LibConformStringTest:testConformStringFuzz(string,uint256) (runs: 255, μ: 151751, ~: 38658)
+LibConformStringTest:testConformStringFuzz(string,uint256) (runs: 255, μ: 156438, ~: 39442)
 LibParseCharIsMaskTest:testIsMaskPastEnd(uint256,uint256,uint256) (runs: 256, μ: 13989, ~: 15797)
 LibParseCharIsMaskTest:testIsMaskReference(string,uint256,uint256) (runs: 248, μ: 7891, ~: 7941)
 LibParseCharSkipMaskTest:testSkipMaskPastEnd(uint256,uint256,uint256) (runs: 256, μ: 13990, ~: 15774)
