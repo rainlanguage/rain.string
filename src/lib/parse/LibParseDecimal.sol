@@ -4,7 +4,7 @@ pragma solidity ^0.8.25;
 
 import {CMASK_NEGATIVE_SIGN} from "./LibParseCMask.sol";
 import {LibParseChar} from "./LibParseChar.sol";
-import {ParseDecimalOverflow, ParseEmptyDecimalString} from "../../error/ErrParse.sol";
+import {ParseDecimalOverflow, ParseEmptyDecimalString, ZeroStringStartPointer} from "../../error/ErrParse.sol";
 
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
@@ -23,6 +23,12 @@ library LibParseDecimal {
         unchecked {
             if (start >= end) {
                 return (ParseEmptyDecimalString.selector, 0);
+            }
+
+            // This edge case is not supported because it is rarely useful and
+            // would add gas overhead on every loop iteration below.
+            if (start == 0) {
+                revert ZeroStringStartPointer();
             }
 
             // The ASCII byte can be translated to a numeric digit by subtracting

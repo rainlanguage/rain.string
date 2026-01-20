@@ -6,12 +6,22 @@ import {Test} from "forge-std/Test.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain.solmem/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
-import {ParseDecimalOverflow} from "src/error/ErrParse.sol";
+import {ParseDecimalOverflow, ZeroStringStartPointer} from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToSignedInt
 contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
+
+    function externalTestZeroStringStartPointer(uint256 end) external pure {
+        LibParseDecimal.unsafeDecimalStringToSignedInt(0, end);
+    }
+
+    function testExternalTestZeroStringStartPointer(uint256 end) external {
+        vm.assume(end > 0);
+        vm.expectRevert(abi.encodeWithSelector(ZeroStringStartPointer.selector));
+        this.externalTestZeroStringStartPointer(end);
+    }
 
     function checkUnsafeStrToSignedInt(string memory input, int256 expected) internal pure {
         (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(

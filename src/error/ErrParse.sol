@@ -9,3 +9,6 @@ error ParseEmptyDecimalString(uint256 position);
 /// The decimal string is too large to fit in a `uint256`.
 /// @param position The position in the data where the error occurred.
 error ParseDecimalOverflow(uint256 position);
+
+/// The decimal string start pointer is zero.
+error ZeroStringStartPointer();
