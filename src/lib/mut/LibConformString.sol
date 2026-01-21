@@ -17,7 +17,8 @@ library LibConformString {
     /// string until it finds one that is in the mask. The `max` parameter is
     /// used to limit the range of characters that are generated. For example, if
     /// the mask only includes ASCII characters, then `max` should be set to 128
-    /// to avoid generating characters outside of the ASCII range.
+    /// to avoid generating characters outside of the ASCII range. Max is an
+    /// exclusive upper bound, relative to 0 indexed character values.
     /// This function uses a simple linear probing algorithm to find a valid
     /// character. It is not the most efficient algorithm, but it is simple and
     /// effective for this use case.
@@ -26,9 +27,24 @@ library LibConformString {
     /// @param max The maximum character value to generate. This is used to
     /// limit the range of characters that are generated.
     function conformStringToMask(string memory str, uint256 mask, uint256 max) internal pure {
-        if (mask == 0) {
-            revert EmptyStringMask();
+        unchecked {
+            if (mask == 0 || max == 0) {
+                revert EmptyStringMask();
+            }
+            // When this is unchecked, if max >= 256, then (1 << max) will
+            // overflow to 0, which then underflows on the -1 anyway to
+            // produce type(uint256).max, which is what we want.
+            // The more normal case is when max < 256, in which case we get
+            // (1 << max) - 1 producing a mask with the lower `max` bits set.
+            // We can then AND that with the provided mask to see if any of
+            // the lower `max` bits are set in the provided mask. This prevents
+            // us from getting stuck in an infinite loop if the mask does not
+            // include any characters in the range [0, max).
+            if (((1 << max) - 1) & mask == 0) {
+                revert EmptyStringMask();
+            }
         }
+
         uint256 seed = 0;
         for (uint256 i = 0; i < bytes(str).length; i++) {
             uint256 char = uint256(uint8(bytes(str)[i]));

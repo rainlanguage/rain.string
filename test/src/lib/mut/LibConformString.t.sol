@@ -22,6 +22,27 @@ contract LibConformStringTest is Test {
         this.externalConformStringToMask(s, 0, max);
     }
 
+    function testConformStringZeroMaxRevert(string memory s, uint256 mask) external {
+        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
+        this.externalConformStringToMask(s, mask, 0);
+    }
+
+    function testConformStringMaxNoPossibleCharsRevert(string memory s, uint256 mask, uint256 max) external {
+        vm.assume(max < 0x100);
+        // Ensure that there are no possible characters in the mask
+        uint256 limitedMask = mask & ((1 << max) - 1);
+        vm.assume(limitedMask == 0);
+        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
+        this.externalConformStringToMask(s, mask, max);
+    }
+
+    function testConformStringMax256OrHigherNeverReverts(string memory s, uint256 mask, uint256 max) external view {
+        max = bound(max, 0x100, type(uint256).max);
+        vm.assume(mask != 0);
+        // This should never revert, as all characters are possible.
+        this.externalConformStringToMask(s, mask, max);
+    }
+
     function testCharFromZeroMaskRevert(uint256 seed) external {
         vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
         this.externalCharFromMask(seed, 0);
@@ -59,7 +80,7 @@ contract LibConformStringTest is Test {
         string memory sInit = new string(1);
         bytes(sInit)[0] = c;
 
-        LibConformString.conformStringToMask(s, mask, 0x100);
+        LibConformString.conformStringToMask(s, mask, type(uint256).max);
         assertEq(s, sInit);
 
         uint256 sInitPointer;
