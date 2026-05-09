@@ -2,11 +2,11 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std/Test.sol";
+import {Test} from "forge-std-1.16.1/src/Test.sol";
 
 import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
-import {Pointer} from "rain.solmem/lib/LibPointer.sol";
-import {LibBytes} from "rain.solmem/lib/LibBytes.sol";
+import {Pointer} from "rain-solmem-0.1.3/src/lib/LibPointer.sol";
+import {LibBytes} from "rain-solmem-0.1.3/src/lib/LibBytes.sol";
 import {LibParseCharSlow} from "test/lib/parse/LibParseCharSlow.sol";
 
 /// @title LibParseCharIsMaskTest

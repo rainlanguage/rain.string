@@ -1,61 +1,63 @@
 # rain.string
 
-Tools for working with strings that we've found useful to build Rainlang.
+Low-level string and parsing primitives used to build Rainlang. Specialised
+parsing logic lives in dedicated Rainlang repos; this is the broadly-applicable,
+gas-efficient base.
 
-More specialised and complex parsing logic exists in other Rainlang repos, but
-this stuff is broadly applicable and low level enough to be gas efficient enough
-to do what needs to be done.
+Parsing in Rainlang works like a bloom filter over individual characters. Read a
+byte from memory, bit-shift, compare against a 32-byte mask representing
+characters of interest (e.g. `0-9`, or `a-zA-Z0-9`). No regexes, in-memory sets,
+or loops — every ASCII char fits unambiguously in a single 32-byte EVM word.
 
-Generally parsing in rainlang works like a bloom filter on individual characters.
-We read characters from memory one byte at a time then bit shift to compare it
-against a bitmap mask that represents characters of interest. For example we
-might need to know if a character is numeric `0-9` or alphanumeric `a-zA-Z0-9`,
-and we cannot rely on regexes, in-memory sets, or even loops, that might be
-easily at hand for similar tasks in other languages.
+## Install
 
-Luckily, EVM values are 32 bytes and so we can fit all posssible ASCII characters
-in a single value as a bloom without any ambiguity.
+Via [soldeer](https://soldeer.xyz):
 
-## Dev stuff
-
-### Local environment & CI
-
-Uses nixos.
-
-Install `nix develop` - https://nixos.org/download.html.
-
-Run `nix develop` in this repo to drop into the shell. Please ONLY use the nix
-version of `foundry` for development, to ensure versions are all compatible.
-
-Read the `flake.nix` file to find some additional commands included for dev and
-CI usage.
-
-## Legal stuff
-
-Everything is under DecentraLicense 1.0 (DCL-1.0) which can be found in `LICENSES/`.
-
-This is basically `CAL-1.0` which is an open source license
-https://opensource.org/license/cal-1-0
-
-The non-legal summary of DCL-1.0 is that the source is open, as expected, but
-also user data in the systems that this code runs on must also be made available
-to those users as relevant, and that private keys remain private.
-
-Roughly it's "not your keys, not your coins" aware, as close as we could get in
-legalese.
-
-This is the default situation on permissionless blockchains, so shouldn't require
-any additional effort by dev-users to adhere to the license terms.
-
-This repo is REUSE 3.2 compliant https://reuse.software/spec-3.2/ and compatible
-with `reuse` tooling (also available in the nix shell here).
-
+```sh
+forge soldeer install rain-string~<version>
 ```
+
+## Develop
+
+This repo uses [nix](https://nixos.org/download.html). The default shell is the
+slim `sol-shell` from [rainix](https://github.com/rainlanguage/rainix).
+
+```sh
+nix develop          # enter the shell
+forge soldeer install # install deps declared in foundry.toml
+forge test
+```
+
+Tasks:
+
+- `rainix-sol-test` — `forge test`
+- `rainix-sol-static` — slither
+- `rainix-sol-legal` — `reuse lint`
+
+Use the nix-pinned `forge` for all development.
+
+## Publish
+
+Tag `v<x.y.z>` on `main`. The
+[`Publish to Soldeer`](.github/workflows/publish-soldeer.yaml) wrapper delegates
+to rainix's reusable workflow, which derives the package name from the repo name
+(`rain.string` → `rain-string`).
+
+## License
+
+DecentraLicense 1.0 (DCL-1.0) — full text in
+[`LICENSES/`](LICENSES/LicenseRef-DCL-1.0.txt). Roughly `CAL-1.0`
+([opensource.org](https://opensource.org/license/cal-1-0)) plus user-data
+disclosure obligations consistent with permissionless-blockchain assumptions.
+
+This repo is [REUSE 3.2](https://reuse.software/spec-3.2/) compliant. Verify
+locally:
+
+```sh
 nix develop -c rainix-sol-legal
 ```
 
 ## Contributions
 
-Contributions are welcome **under the same license** as above.
-
-Contributors agree and warrant that their contributions are compliant.
+Welcome under the same license. Contributors warrant that their contributions
+are compliant.
