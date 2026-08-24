@@ -76,4 +76,90 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         assertEq(errorSelector, ParseDecimalOverflow.selector);
         assertEq(result, 0);
     }
+
+    /// Test that the exact maximum uint256 value parses, including with
+    /// leading zeros.
+    function testUnsafeDecimalStrToIntMax(uint8 leadingZerosCount) external pure {
+        string memory str = type(uint256).max.toString();
+
+        string memory leadingZeros = new string(leadingZerosCount);
+        for (uint8 i = 0; i < leadingZerosCount; i++) {
+            bytes(leadingZeros)[i] = "0";
+        }
+
+        string memory input = string(abi.encodePacked(leadingZeros, str));
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, bytes4(0));
+        assertEq(result, type(uint256).max);
+    }
+
+    /// Test that the maximum uint256 value plus one overflows.
+    function testUnsafeDecimalStrToIntOverflowMaxPlusOne() external pure {
+        bytes memory input = bytes(type(uint256).max.toString());
+        // The decimal representation of the max uint256 value ends in a 5, so
+        // incrementing the final digit yields the decimal string for 2^256
+        // without carrying.
+        input[input.length - 1] = "6";
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(input.dataPointer()), Pointer.unwrap(input.endDataPointer())
+        );
+
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that a 78 digit string with a leading 1 parses when it fits in a
+    /// uint256.
+    function testUnsafeDecimalStrToIntTenPow77() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        string memory input = string(abi.encodePacked("1", zeros));
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, bytes4(0));
+        assertEq(result, 10 ** 77);
+    }
+
+    /// Test that a 78 digit string with a leading 2 overflows.
+    function testUnsafeDecimalStrToIntOverflowTwoTenPow77() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        string memory input = string(abi.encodePacked("2", zeros));
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that a nonzero character beyond the 78th digit overflows even when
+    /// zeros sit between it and the digits that would otherwise parse.
+    function testUnsafeDecimalStrToIntOverflowNonZeroBeyond78() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        string memory input = string(abi.encodePacked("101", zeros));
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+    }
 }
