@@ -105,7 +105,7 @@ library LibConformString {
         uint256 char = uint256(uint8(bytes(str)[index]));
         uint256 seed = 0;
         // forge-lint: disable-next-line(unsafe-typecast,incorrect-shift)
-        while (1 << char & ~CMASK_STRING_LITERAL_TAIL == 0 || char == uint8(bytes1("\""))) {
+        while (1 << char & ~uint256(CMASK_STRING_LITERAL_TAIL) == 0 || char == uint8(bytes1("\""))) {
             assembly ("memory-safe") {
                 mstore(0, char)
                 mstore(0x20, seed)

@@ -252,16 +252,48 @@ contract LibConformStringTest is Test {
     }
 
     /// A byte that is already outside the string literal tail mask (and is not
-    /// a double quote) is written back unchanged.
+    /// a double quote) is written back unchanged, including bytes above the
+    /// ASCII range.
     function testCorruptSingleCharAlreadyInvalid() external pure {
-        bytes memory b = hex"001f7f";
+        bytes memory b = hex"001f7f80ff";
         string memory s = string(b);
         LibConformString.corruptSingleChar(s, 0);
         LibConformString.corruptSingleChar(s, 1);
         LibConformString.corruptSingleChar(s, 2);
+        LibConformString.corruptSingleChar(s, 3);
+        LibConformString.corruptSingleChar(s, 4);
         assertEq(uint8(bytes(s)[0]), 0x00);
         assertEq(uint8(bytes(s)[1]), 0x1F);
         assertEq(uint8(bytes(s)[2]), 0x7F);
+        assertEq(uint8(bytes(s)[3]), 0x80);
+        assertEq(uint8(bytes(s)[4]), 0xFF);
+    }
+
+    /// The corruption alphabet covers the full byte range: sweeping every
+    /// valid string literal tail byte as the starting character, every
+    /// deterministic corruption result is outside the string literal tail
+    /// mask and is not a double quote, and at least one result is a byte
+    /// above the ASCII range.
+    function testCorruptSingleCharHighByteReachable() external pure {
+        uint256 highByteCount = 0;
+        for (uint256 c = 0; c < 0x100; c++) {
+            // forge-lint: disable-next-line(incorrect-shift)
+            if ((1 << c) & uint256(CMASK_STRING_LITERAL_TAIL) == 0) {
+                continue;
+            }
+            string memory s = new string(1);
+            // forge-lint: disable-next-line(unsafe-typecast)
+            bytes(s)[0] = bytes1(uint8(c));
+            LibConformString.corruptSingleChar(s, 0);
+            uint256 char = uint256(uint8(bytes(s)[0]));
+            // forge-lint: disable-next-line(incorrect-shift)
+            assertTrue((1 << char) & uint256(CMASK_STRING_LITERAL_TAIL) == 0);
+            assertTrue(char != uint256(uint8(bytes1("\""))));
+            if (char >= 0x80) {
+                highByteCount++;
+            }
+        }
+        assertTrue(highByteCount > 0);
     }
 
     /// An index at the end of the string is out of bounds and panics.
