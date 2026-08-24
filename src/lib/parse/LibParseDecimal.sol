@@ -118,6 +118,19 @@ library LibParseDecimal {
     /// @return The signed integer representation of the ASCII string.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {
         unchecked {
+            // Empty regions are reported before the zero start pointer check,
+            // matching `unsafeDecimalStringToInt`.
+            if (start >= end) {
+                return (ParseEmptyDecimalString.selector, 0);
+            }
+
+            // A zero start pointer is rejected before the negative sign check
+            // reads the byte at `start`, so the rejection cannot be bypassed
+            // by scratch memory happening to hold a negative sign character.
+            if (start == 0) {
+                revert ZeroStringStartPointer();
+            }
+
             uint256 cursor = start;
             uint256 isNeg = LibParseChar.isMask(cursor, end, CMASK_NEGATIVE_SIGN);
             cursor += isNeg;
@@ -130,20 +143,25 @@ library LibParseDecimal {
 
             // Handle positive value.
             if (isNeg == 0) {
-                // typecast is safe because we know that value is less than or equal
-                // to type(int256).max.
+                if (value > uint256(type(int256).max)) {
+                    return (ParseDecimalOverflow.selector, 0);
+                }
+                // typecast is safe because we know that value is less than or
+                // equal to type(int256).max.
                 // forge-lint: disable-next-line(unsafe-typecast)
-                return (value > uint256(type(int256).max) ? ParseDecimalOverflow.selector : bytes4(0), int256(value));
+                return (bytes4(0), int256(value));
             }
 
             // Fallback to negative value.
+            if (value > uint256(type(int256).max) + 1) {
+                return (ParseDecimalOverflow.selector, 0);
+            }
             // typecast is safe because we know that value is less than or equal
-            // to type(int256).max + 1.
-            // This looks bad if `value == type(int256).max + 1`, because that is
-            // an overflow, but we do get the correct result, and there is a test
-            // for that.
+            // to type(int256).max + 1. When `value == type(int256).max + 1` the
+            // cast wraps to type(int256).min, and negating type(int256).min is
+            // itself, which is the correct result.
             // forge-lint: disable-next-line(unsafe-typecast)
-            return (value > uint256(type(int256).max) + 1 ? ParseDecimalOverflow.selector : bytes4(0), -int256(value));
+            return (bytes4(0), -int256(value));
         }
     }
 }
