@@ -146,6 +146,15 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         checkUnsafeStrToSignedIntInvalid("-1.5");
     }
 
+    /// Test the sign entry edges. `+` is not a recognized sign, so it reaches
+    /// the inner unsigned parse and classifies as an invalid decimal
+    /// character. A consumed leading `-` still subjects every byte after it to
+    /// the digit check, so an invalid byte after the sign is invalid too.
+    function testUnsafeStrToSignedIntSignEdges() external pure {
+        checkUnsafeStrToSignedIntInvalid("+5");
+        checkUnsafeStrToSignedIntInvalid("-a5");
+    }
+
     function checkUnsafeStrToSignedIntInvalid(string memory input) internal pure {
         (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())

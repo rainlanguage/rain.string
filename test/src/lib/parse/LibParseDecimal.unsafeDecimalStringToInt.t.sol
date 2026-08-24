@@ -6,6 +6,7 @@ import {Test} from "forge-std-1.16.1/src/Test.sol";
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
+import {LibParseDecimalSlow} from "test/lib/parse/LibParseDecimalSlow.sol";
 import {
     ParseEmptyDecimalString,
     ParseDecimalOverflow,
@@ -151,8 +152,29 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         assertEq(result, 0);
     }
 
+    /// Test that a 78 digit string with a leading 9 overflows. `9` is the top
+    /// of the digit range, so this pins that the 78th-from-last byte check
+    /// classifies `9` as an overflowing digit, not as an invalid character.
+    function testUnsafeDecimalStrToIntOverflowNineTenPow77() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        string memory input = string(abi.encodePacked("9", zeros));
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+    }
+
     /// Test that a nonzero character beyond the 78th digit overflows even when
-    /// zeros sit between it and the digits that would otherwise parse.
+    /// zeros sit between it and the digits that would otherwise parse. `9` is
+    /// the top of the digit range, so the second case pins that the leading
+    /// region classifies `9` as an overflowing digit, not as an invalid
+    /// character.
     function testUnsafeDecimalStrToIntOverflowNonZeroBeyond78() external pure {
         string memory zeros = new string(77);
         for (uint256 i = 0; i < 77; i++) {
@@ -161,6 +183,15 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         string memory input = string(abi.encodePacked("101", zeros));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+
+        input = string(abi.encodePacked("901", zeros));
+
+        (errorSelector, result) = LibParseDecimal.unsafeDecimalStringToInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
 
@@ -201,6 +232,35 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         checkUnsafeStrToIntInvalid("1:1");
     }
 
+    /// Test the boundary bytes of the invalid space, each at index 1 of a
+    /// three byte string: `/` (0x2F) one below `0`, `:` (0x3A) one above `9`,
+    /// 0x80 the lowest high-bit byte, and 0xFF the highest byte. Each yields
+    /// `ParseInvalidDecimalChar` and a zero value.
+    function testUnsafeDecimalStrToIntBoundaryBytePins() external pure {
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("1", bytes1(0x2F), "1")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("1", bytes1(0x3A), "1")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("1", bytes1(0x80), "1")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("1", bytes1(0xFF), "1")));
+    }
+
+    /// Test each boundary byte of the invalid space at exactly the first
+    /// position of the region.
+    function testUnsafeDecimalStrToIntInvalidByteAtStart() external pure {
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(bytes1(0x2F), "11")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(bytes1(0x3A), "11")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(bytes1(0x80), "11")));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(bytes1(0xFF), "11")));
+    }
+
+    /// Test each boundary byte of the invalid space at exactly the last
+    /// position of the region.
+    function testUnsafeDecimalStrToIntInvalidByteAtEnd() external pure {
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("11", bytes1(0x2F))));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("11", bytes1(0x3A))));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("11", bytes1(0x80))));
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("11", bytes1(0xFF))));
+    }
+
     /// Test that any byte outside `0`-`9` at any position in an otherwise
     /// valid decimal string yields `ParseInvalidDecimalChar` and a zero value.
     function testUnsafeDecimalStrToIntInvalidCharAnywhere(uint256 value, uint8 invalidByte, uint256 position)
@@ -220,23 +280,33 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     }
 
     /// Test that a byte outside `0`-`9` at the 78th-from-last position yields
-    /// `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`.
+    /// `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`, including the
+    /// boundary bytes immediately adjacent to the digit range.
     function testUnsafeDecimalStrToIntInvalidCharAt78th() external pure {
         string memory zeros = new string(77);
         for (uint256 i = 0; i < 77; i++) {
             bytes(zeros)[i] = "0";
         }
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("a", zeros)));
+        // 0x2F, one below the `0` byte.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("/", zeros)));
+        // 0x3A, one above the `9` byte.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(":", zeros)));
     }
 
     /// Test that a byte outside `0`-`9` beyond the 78th-from-last position
-    /// yields `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`.
+    /// yields `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`, including
+    /// the boundary bytes immediately adjacent to the digit range.
     function testUnsafeDecimalStrToIntInvalidCharBeyond78() external pure {
         string memory zeros = new string(77);
         for (uint256 i = 0; i < 77; i++) {
             bytes(zeros)[i] = "0";
         }
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("a1", zeros)));
+        // 0x2F, one below the `0` byte.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("/1", zeros)));
+        // 0x3A, one above the `9` byte.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked(":1", zeros)));
     }
 
     /// Test that when the region contains both an invalid byte and a digit
@@ -257,5 +327,44 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         // `5` at the 78th-from-last position would overflow; `a` sits beyond
         // the 78th.
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("a5", zeros77)));
+    }
+
+    function checkUnsafeStrToIntAgainstReference(bytes memory data) internal pure {
+        (bytes4 slowSelector, uint256 slowValue) = LibParseDecimalSlow.decimalStringToIntSlow(data);
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(data.dataPointer()), Pointer.unwrap(data.endDataPointer())
+        );
+        assertEq(errorSelector, slowSelector);
+        assertEq(result, slowValue);
+    }
+
+    /// Test that the conversion agrees with the naive reference implementation
+    /// on both the selector and the value for arbitrary bytes.
+    function testUnsafeDecimalStrToIntReference(bytes memory data) external pure {
+        checkUnsafeStrToIntAgainstReference(data);
+    }
+
+    /// Test that the conversion agrees with the naive reference implementation
+    /// on both the selector and the value for digit-dense strings up to 100
+    /// characters, crossing the 77-character accumulation window, with one
+    /// arbitrary byte overwriting a digit at any position (or not at all when
+    /// the overwrite position lands past the end).
+    function testUnsafeDecimalStrToIntReferenceLong(
+        uint256 seed,
+        uint256 length,
+        uint256 overwritePosition,
+        uint8 overwriteByte
+    ) external pure {
+        length = bound(length, 1, 100);
+        bytes memory data = new bytes(length);
+        for (uint256 i = 0; i < length; i++) {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            data[i] = bytes1(uint8(0x30 + uint256(keccak256(abi.encodePacked(seed, i))) % 10));
+        }
+        overwritePosition = bound(overwritePosition, 0, length);
+        if (overwritePosition < length) {
+            data[overwritePosition] = bytes1(overwriteByte);
+        }
+        checkUnsafeStrToIntAgainstReference(data);
     }
 }
