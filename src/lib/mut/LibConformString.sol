@@ -93,12 +93,13 @@ library LibConformString {
         conformStringToMask(str, CMASK_WHITESPACE, 33);
     }
 
-    /// Corrupts a single character in the string to some random byte value in
-    /// a rather inefficient way. This is primarily useful for testing
+    /// Ensures the character at the specified index is not a valid character
+    /// in a string literal (i.e., not in the CMASK_STRING_LITERAL_TAIL mask)
+    /// and is not a double quote. This is primarily useful for testing
     /// purposes, e.g., to test that a parser correctly rejects invalid input.
-    /// The character at the specified index is replaced with a random byte
-    /// value that is not a valid character in a string literal (i.e., not in
-    /// the CMASK_STRING_LITERAL_TAIL mask) and is not a double quote.
+    /// A character that is already invalid and not a double quote is kept
+    /// as-is; any other character is replaced with a random such byte value
+    /// in a rather inefficient way.
     /// @param str The string to corrupt. This string is mutated in place.
     /// @param index The index of the character to corrupt.
     function corruptSingleChar(string memory str, uint256 index) internal pure {
