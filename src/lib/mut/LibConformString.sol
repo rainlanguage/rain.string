@@ -35,41 +35,36 @@ library LibConformString {
         // The reroll modulus is the bit length of the mask: the index of its
         // highest set bit plus one. Candidates are generated strictly below
         // it, which keeps them near the mask while still reaching every set
-        // bit.
-        uint256 max = 1;
-        {
-            uint256 m = mask;
-            if (m >> 128 != 0) {
-                max += 128;
-                m >>= 128;
-            }
-            if (m >> 64 != 0) {
-                max += 64;
-                m >>= 64;
-            }
-            if (m >> 32 != 0) {
-                max += 32;
-                m >>= 32;
-            }
-            if (m >> 16 != 0) {
-                max += 16;
-                m >>= 16;
-            }
-            if (m >> 8 != 0) {
-                max += 8;
-                m >>= 8;
-            }
-            if (m >> 4 != 0) {
-                max += 4;
-                m >>= 4;
-            }
-            if (m >> 2 != 0) {
-                max += 2;
-                m >>= 2;
-            }
-            if (m >> 1 != 0) {
-                max += 1;
-            }
+        // bit. Branchless binary search: each step tests whether the reduced
+        // mask still has a bit at or above the step's width, and if so shifts
+        // it down by that width and adds the width to the accumulated length.
+        // `s` is the step's shift amount, either the width or zero.
+        uint256 max;
+        assembly ("memory-safe") {
+            max := 1
+            let m := mask
+            let s := shl(7, iszero(iszero(shr(128, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(6, iszero(iszero(shr(64, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(5, iszero(iszero(shr(32, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(4, iszero(iszero(shr(16, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(3, iszero(iszero(shr(8, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(2, iszero(iszero(shr(4, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(1, iszero(iszero(shr(2, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            max := add(max, iszero(iszero(shr(1, m))))
         }
 
         uint256 seed = 0;
