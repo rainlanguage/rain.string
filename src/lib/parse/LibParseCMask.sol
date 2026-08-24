@@ -522,9 +522,10 @@ uint256 constant CMASK_TILDE = uint256(1) << uint256(uint8(bytes1("~")));
 // forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant CMASK_DELETE = uint256(1) << uint256(uint8(bytes1("\x7F")));
 
-/// @dev ASCII printable characters is 0x20-0x7E inclusive. The complement of
-/// the control characters is clipped to 7-bit ASCII so bits 0x80-0xFF stay
-/// unset.
+/// @dev ASCII printable characters is 0x20-0x7E inclusive. The uint256
+/// complement of the control characters sets every bit for 0x80-0xFF, which
+/// would mark all high bytes printable; the clip to type(uint128).max removes
+/// them.
 uint256 constant CMASK_PRINTABLE =
     ~(CMASK_NULL
             | CMASK_START_OF_HEADING
@@ -650,6 +651,8 @@ uint256 constant CMASK_SUB_PARSEABLE_LITERAL_END = CMASK_RIGHT_SQUARE_BRACKET;
 uint256 constant CMASK_STRING_LITERAL_END = CMASK_QUOTATION_MARK;
 
 /// @dev Rainlang string tail is any printable ASCII except " which ends it.
+/// The uint256 complement of the end char sets every bit for 0x80-0xFF; the
+/// intersection with CMASK_PRINTABLE discards them along with the controls.
 uint256 constant CMASK_STRING_LITERAL_TAIL = ~CMASK_STRING_LITERAL_END & CMASK_PRINTABLE;
 
 /// @dev Rainlang literal head
