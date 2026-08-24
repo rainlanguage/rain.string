@@ -1,8 +1,0 @@
-{
-  "lib/openzeppelin-contracts": {
-    "rev": "fcbae5394ae8ad52d8e580a3477db99814b9d565"
-  },
-  "lib/rain.solmem": {
-    "rev": "2e47e41af85a711d837b2518656db0efdae814c2"
-  }
-}
