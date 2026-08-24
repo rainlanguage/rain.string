@@ -410,8 +410,8 @@ contract LibParseCMaskTest is Test {
     /// byte domain: they are disjoint and together cover every byte 0x00-0xFF,
     /// with every high byte 0x80-0xFF on the NOT side.
     function testCMaskNotIdentifierTailPartitionsByteDomain() external pure {
-        assertEq(uint256(CMASK_IDENTIFIER_TAIL) | CMASK_NOT_IDENTIFIER_TAIL, type(uint256).max);
-        assertEq(uint256(CMASK_IDENTIFIER_TAIL) & CMASK_NOT_IDENTIFIER_TAIL, 0);
+        assertEq(CMASK_IDENTIFIER_TAIL | CMASK_NOT_IDENTIFIER_TAIL, type(uint256).max);
+        assertEq(CMASK_IDENTIFIER_TAIL & CMASK_NOT_IDENTIFIER_TAIL, 0);
         for (uint256 c = 0x80; c <= 0xFF; c++) {
             assertEq((1 << c) & CMASK_NOT_IDENTIFIER_TAIL, 1 << c);
         }
@@ -419,7 +419,7 @@ contract LibParseCMaskTest is Test {
 
     /// The consumer-visible form of the mask domains: reading any byte
     /// 0x80-0xFF through LibParseChar.isMask misses CMASK_IDENTIFIER_TAIL and
-    /// CMASK_PRINTABLE, which are uint128 masks over 7-bit ASCII, but hits
+    /// CMASK_PRINTABLE, whose bits 0x80-0xFF are unset, but hits
     /// CMASK_NOT_IDENTIFIER_TAIL, which complements over the full byte domain.
     function testCMaskHighBytesIsMask() external pure {
         for (uint256 c = 0x80; c <= 0xFF; c++) {
@@ -428,9 +428,9 @@ contract LibParseCMaskTest is Test {
             data[0] = bytes1(uint8(c));
             uint256 cursor = Pointer.unwrap(data.dataPointer());
             uint256 end = Pointer.unwrap(data.endDataPointer());
-            assertEq(LibParseChar.isMask(cursor, end, uint256(CMASK_IDENTIFIER_TAIL)), 0);
+            assertEq(LibParseChar.isMask(cursor, end, CMASK_IDENTIFIER_TAIL), 0);
             assertEq(LibParseChar.isMask(cursor, end, CMASK_NOT_IDENTIFIER_TAIL), 1);
-            assertEq(LibParseChar.isMask(cursor, end, uint256(CMASK_PRINTABLE)), 0);
+            assertEq(LibParseChar.isMask(cursor, end, CMASK_PRINTABLE), 0);
         }
     }
 }
