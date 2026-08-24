@@ -5,11 +5,13 @@ pragma solidity ^0.8.25;
 library LibParseChar {
     /// Skip an unlimited number of chars until we find one that is not in the
     /// mask. If the cursor is at or past the end, the result is the cursor.
-    /// This function DOES NOT check if the cursor is in range of the end as it
-    /// is expected to be used in very hot gas sensitive loops so we want to
-    /// avoid jumps. The function IS guaranteed never to move the cursor past
-    /// the end if it was not already there.
     /// Otherwise, the result points to the first char that is not in the mask.
+    /// This function DOES NOT revert if the caller passes a cursor out of
+    /// range of the end, as it is expected to be used in very hot gas
+    /// sensitive loops so we want to avoid any branching beyond the loop
+    /// condition. That condition checks `cursor < end` on every iteration,
+    /// so the cursor IS guaranteed never to move past the end if it was not
+    /// already there.
     /// @param cursor The current position in the data.
     /// @param end The end of the data.
     /// @param mask The mask to check against.
