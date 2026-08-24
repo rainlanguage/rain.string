@@ -172,6 +172,9 @@ import {
     CMASK_LITERAL_HEX_DISPATCH,
     LITERAL_HEX_DISPATCH_START_SEQUENCE
 } from "src/lib/parse/LibParseCMask.sol";
+import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
+import {Pointer} from "rain-solmem-0.1.26/src/lib/LibPointer.sol";
+import {LibBytes} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 
 /// @title LibParseCMaskTest
 /// @notice Pins every character mask constant to its ASCII semantics. Expected
@@ -179,6 +182,8 @@ import {
 /// positions, and composite masks are rebuilt independently from their
 /// documented character sets.
 contract LibParseCMaskTest is Test {
+    using LibBytes for bytes;
+
     /// Builds a mask with one bit set for every character code in the
     /// inclusive range [lo, hi].
     function rangeMask(uint256 lo, uint256 hi) internal pure returns (uint256 mask) {
@@ -399,5 +404,32 @@ contract LibParseCMaskTest is Test {
         assertEq(COMMENT_END_SEQUENCE, 0x2A2F); // "*/"
         assertEq(COMMENT_END_SEQUENCE_END, 0x2F); // "/"
         assertEq(LITERAL_HEX_DISPATCH_START_SEQUENCE, 0x3078); // "0x"
+    }
+
+    /// Bytes 0x80-0xFF are in neither CMASK_IDENTIFIER_TAIL nor
+    /// CMASK_NOT_IDENTIFIER_TAIL: the complement is taken at uint128 width,
+    /// so the two masks together cover only the 7-bit ASCII domain and do not
+    /// partition the full byte domain.
+    function testCMaskIdentifierTailHighBytesInNeitherMask() external pure {
+        for (uint256 c = 0x80; c <= 0xFF; c++) {
+            assertEq((1 << c) & (uint256(CMASK_IDENTIFIER_TAIL) | uint256(CMASK_NOT_IDENTIFIER_TAIL)), 0);
+        }
+    }
+
+    /// The consumer-visible form of the 7-bit ASCII mask domain: reading any
+    /// byte 0x80-0xFF through LibParseChar.isMask matches neither
+    /// CMASK_IDENTIFIER_TAIL nor CMASK_NOT_IDENTIFIER_TAIL, and is never
+    /// printable.
+    function testCMaskHighBytesNeverMatchIsMask() external pure {
+        for (uint256 c = 0x80; c <= 0xFF; c++) {
+            bytes memory data = new bytes(1);
+            // forge-lint: disable-next-line(unsafe-typecast)
+            data[0] = bytes1(uint8(c));
+            uint256 cursor = Pointer.unwrap(data.dataPointer());
+            uint256 end = Pointer.unwrap(data.endDataPointer());
+            assertEq(LibParseChar.isMask(cursor, end, uint256(CMASK_IDENTIFIER_TAIL)), 0);
+            assertEq(LibParseChar.isMask(cursor, end, uint256(CMASK_NOT_IDENTIFIER_TAIL)), 0);
+            assertEq(LibParseChar.isMask(cursor, end, uint256(CMASK_PRINTABLE)), 0);
+        }
     }
 }
