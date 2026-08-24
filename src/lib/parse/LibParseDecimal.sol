@@ -111,14 +111,11 @@ library LibParseDecimal {
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
     /// @return The error selector if the conversion failed, `0` otherwise.
-    /// `ParseEmptyDecimalString` if the region is empty or contains only a
-    /// negative sign, `ParseDecimalOverflow` if the represented integer is
-    /// outside the `int256` range. The selector is returned bare: both
-    /// declare a `uint256 position` parameter, but this library does not
-    /// know the caller's position, so a caller that reverts with the
-    /// selector appends its own position.
-    /// @return The signed integer representation of the ASCII string, or `0`
-    /// if the conversion failed.
+    /// The selector is returned bare: `ParseEmptyDecimalString` and
+    /// `ParseDecimalOverflow` declare a `uint256 position` parameter, but
+    /// this library does not know the caller's position, so a caller that
+    /// reverts with the selector appends its own position.
+    /// @return The signed integer representation of the ASCII string.
     /// ALWAYS check the error selector before using the value.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {
         unchecked {
