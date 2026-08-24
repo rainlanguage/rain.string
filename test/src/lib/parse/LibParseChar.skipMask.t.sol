@@ -16,10 +16,35 @@ contract LibParseCharSkipMaskTest is Test {
 
     /// Test that cursor at or past end is always the end for skipMask.
     function testSkipMaskPastEnd(uint256 cursor, uint256 end, uint256 mask) external pure {
-        // Limit to 16-bit values to avoid OOM reads.
-        end = bound(end, 0, type(uint16).max);
-        cursor = bound(cursor, end, type(uint16).max);
+        cursor = bound(cursor, end, type(uint256).max);
         assertEq(LibParseChar.skipMask(cursor, end, mask), cursor);
+    }
+
+    /// Test that a cursor far past the end is returned unchanged rather than
+    /// paying for memory expansion out to the cursor. A full mask would skip
+    /// any char, so an unchanged cursor can only come from the bounds check.
+    /// The fuzz args are bound to fixed values so the cursor and end are
+    /// opaque at compile time and the load cannot be folded away by the
+    /// optimizer.
+    function testSkipMaskFarPastEnd(uint256 cursor, uint256 end) external pure {
+        end = bound(end, 0, 0);
+        cursor = bound(cursor, 1 << 32, 1 << 32);
+        assertEq(LibParseChar.skipMask(cursor, end, type(uint256).max), 1 << 32);
+        cursor = bound(cursor, type(uint256).max, type(uint256).max);
+        assertEq(LibParseChar.skipMask(cursor, end, type(uint256).max), type(uint256).max);
+        assertEq(LibParseChar.skipMask(cursor, cursor, type(uint256).max), type(uint256).max);
+    }
+
+    /// Test that skipMask stops exactly at the end even when the chars just
+    /// past the end are also in the mask.
+    function testSkipMaskStopsAtEnd() external pure {
+        bytes memory s = new bytes(64);
+        for (uint256 i = 0; i < 64; i++) {
+            s[i] = "a";
+        }
+        uint256 cursor = Pointer.unwrap(s.dataPointer());
+        uint256 end = cursor + 32;
+        assertEq(LibParseChar.skipMask(cursor, end, 1 << uint256(uint8(bytes1("a")))), end);
     }
 
     /// Test that skipMask matches a reference implementation.
