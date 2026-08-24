@@ -4,23 +4,34 @@ pragma solidity ^0.8.25;
 
 import {CMASK_NEGATIVE_SIGN} from "./LibParseCMask.sol";
 import {LibParseChar} from "./LibParseChar.sol";
-import {ParseDecimalOverflow, ParseEmptyDecimalString, ZeroStringStartPointer} from "../../error/ErrParse.sol";
+import {
+    ParseDecimalOverflow,
+    ParseEmptyDecimalString,
+    ParseInvalidDecimalChar,
+    ZeroStringStartPointer
+} from "../../error/ErrParse.sol";
 
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
     /// integer.
-    /// DOES NOT check that the string contains valid decimal characters. You can
-    /// use `LibParseChar.skipMask` to easily bound some valid decimal characters.
+    /// DOES check that every byte in the region is a decimal character `0`-`9`:
+    /// any other byte anywhere in the region yields `ParseInvalidDecimalChar`.
+    /// When the region contains both an invalid byte and digits that would
+    /// overflow, `ParseInvalidDecimalChar` wins.
     /// DOES check for unsigned integer overflow.
+    /// `unsafe` refers to the pointers: `start` and `end` are read as raw
+    /// memory addresses with no bounds or ownership checks, so the caller is
+    /// responsible for them delimiting a readable region.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
     /// @return The error selector if the conversion failed, `0` otherwise.
-    /// The selector is returned bare: `ParseEmptyDecimalString` and
-    /// `ParseDecimalOverflow` declare a `uint256 position` parameter, but
-    /// this library does not know the caller's position, so a caller that
-    /// reverts with the selector appends its own position.
+    /// The selector is returned bare: `ParseEmptyDecimalString`,
+    /// `ParseDecimalOverflow` and `ParseInvalidDecimalChar` declare a
+    /// `uint256 position` parameter, but this library does not know the
+    /// caller's position, so a caller that reverts with the selector appends
+    /// its own position.
     /// @return The unsigned integer representation of the ASCII string.
     /// ALWAYS check the error selector before using the value.
     function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (bytes4, uint256) {
@@ -43,15 +54,18 @@ library LibParseDecimal {
             uint256 cursor;
             cursor = end - 1;
             uint256 value = 0;
+            // Nonzero when any byte seen so far maps outside the digit range
+            // 0-9. Accumulated branchlessly beside the digit math so the
+            // loops stay jump free; checked once after the loops.
+            uint256 nonDigit = 0;
 
             // Anything under 10^77 is safe to raise to its power of 10 without
             // overflowing a uint256.
             while (cursor >= start && exponent < 77) {
-                // The byte is not checked to be a decimal digit;
-                // ensuring the region contains only decimal characters
-                // is the caller's responsibility.
                 assembly ("memory-safe") {
-                    value := add(value, mul(sub(byte(0, mload(cursor)), digitOffset), exp(10, exponent)))
+                    let digit := sub(byte(0, mload(cursor)), digitOffset)
+                    nonDigit := or(nonDigit, gt(digit, 9))
+                    value := add(value, mul(digit, exp(10, exponent)))
                 }
                 exponent++;
                 cursor--;
@@ -61,41 +75,47 @@ library LibParseDecimal {
             // to check if the remaining digit is safe to multiply
             // by 10 without overflowing a uint256.
             if (cursor >= start) {
-                {
-                    uint256 digit;
+                uint256 digit;
+                assembly ("memory-safe") {
+                    digit := sub(byte(0, mload(cursor)), digitOffset)
+                    nonDigit := or(nonDigit, gt(digit, 9))
+                }
+                cursor--;
+
+                // Everything left of the 78th-from-last character must be a
+                // leading zero for the value to fit a uint256. Nonzero digits
+                // accumulate into a flag instead of returning early so that
+                // an invalid byte anywhere in the region still classifies as
+                // invalid rather than as overflow.
+                uint256 nonZeroLeading = 0;
+                while (cursor >= start) {
                     assembly ("memory-safe") {
-                        digit := sub(byte(0, mload(cursor)), digitOffset)
-                    }
-                    // If the digit is greater than 1, then we know that
-                    // multiplying it by 10^77 will overflow a uint256.
-                    if (digit > 1) {
-                        return (ParseDecimalOverflow.selector, 0);
-                    } else {
-                        uint256 scaled = digit * (10 ** exponent);
-                        if (value + scaled < value) {
-                            return (ParseDecimalOverflow.selector, 0);
-                        }
-                        value += scaled;
+                        let leadingDigit := sub(byte(0, mload(cursor)), digitOffset)
+                        nonDigit := or(nonDigit, gt(leadingDigit, 9))
+                        nonZeroLeading := or(nonZeroLeading, iszero(iszero(leadingDigit)))
                     }
                     cursor--;
                 }
 
-                {
-                    // If we didn't consume the entire literal, then only
-                    // leading zeros are allowed.
-                    while (cursor >= start) {
-                        //slither-disable-next-line similar-names
-                        uint256 decimalCharByte;
-                        assembly ("memory-safe") {
-                            decimalCharByte := byte(0, mload(cursor))
-                        }
-                        // forge-lint: disable-next-line(unsafe-typecast)
-                        if (decimalCharByte != uint256(uint8(bytes1("0")))) {
-                            return (ParseDecimalOverflow.selector, 0);
-                        }
-                        cursor--;
-                    }
+                if (nonDigit != 0) {
+                    return (ParseInvalidDecimalChar.selector, 0);
                 }
+
+                // A digit greater than 1 multiplied by 10^77 overflows a
+                // uint256, as does any nonzero digit further left.
+                if (digit > 1 || nonZeroLeading != 0) {
+                    return (ParseDecimalOverflow.selector, 0);
+                }
+                uint256 scaled = digit * (10 ** exponent);
+                if (value + scaled < value) {
+                    return (ParseDecimalOverflow.selector, 0);
+                }
+                value += scaled;
+                return (bytes4(0), value);
+            }
+
+            if (nonDigit != 0) {
+                return (ParseInvalidDecimalChar.selector, 0);
             }
 
             return (bytes4(0), value);
@@ -104,17 +124,24 @@ library LibParseDecimal {
 
     /// @notice Convert a decimal ASCII string in a memory region to a signed
     /// integer.
-    /// DOES NOT check that the string contains valid decimal characters and/or
-    /// a negative sign.
+    /// An optional single leading negative sign is consumed; every byte after
+    /// it is checked to be a decimal character `0`-`9` by the unsigned
+    /// conversion, so any other byte anywhere in the region yields
+    /// `ParseInvalidDecimalChar`.
+    /// DOES check for signed integer overflow.
+    /// `unsafe` refers to the pointers: `start` and `end` are read as raw
+    /// memory addresses with no bounds or ownership checks, so the caller is
+    /// responsible for them delimiting a readable region.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
     /// @return The error selector if the conversion failed, `0` otherwise.
-    /// The selector is returned bare: `ParseEmptyDecimalString` and
-    /// `ParseDecimalOverflow` declare a `uint256 position` parameter, but
-    /// this library does not know the caller's position, so a caller that
-    /// reverts with the selector appends its own position.
+    /// The selector is returned bare: `ParseEmptyDecimalString`,
+    /// `ParseDecimalOverflow` and `ParseInvalidDecimalChar` declare a
+    /// `uint256 position` parameter, but this library does not know the
+    /// caller's position, so a caller that reverts with the selector appends
+    /// its own position.
     /// @return The signed integer representation of the ASCII string.
     /// ALWAYS check the error selector before using the value.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {

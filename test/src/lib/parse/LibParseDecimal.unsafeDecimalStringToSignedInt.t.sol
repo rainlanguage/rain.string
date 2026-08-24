@@ -6,7 +6,12 @@ import {Test} from "forge-std-1.16.1/src/Test.sol";
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
-import {ParseEmptyDecimalString, ParseDecimalOverflow, ZeroStringStartPointer} from "src/error/ErrParse.sol";
+import {
+    ParseEmptyDecimalString,
+    ParseDecimalOverflow,
+    ParseInvalidDecimalChar,
+    ZeroStringStartPointer
+} from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToSignedInt
 contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
@@ -118,16 +123,43 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         assertEq(result, 0);
     }
 
-    /// Test that garbage input reaching the negative overflow path returns a
-    /// zero value beside the selector. A double negative sign leaves the inner
-    /// unsigned parse reading the second sign as a digit, which lands in the
-    /// negative overflow branch.
-    function testUnsafeStrToSignedIntGarbageOverflowZeroValue() external pure {
+    /// Test that a double negative sign yields `ParseInvalidDecimalChar` and
+    /// a zero value. Only the first sign is consumed as a negative sign; the
+    /// second reaches the inner unsigned parse, which rejects it as an
+    /// invalid decimal character.
+    function testUnsafeStrToSignedIntDoubleNegInvalidChar() external pure {
         string memory input = "--5";
         (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
-        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(errorSelector, ParseInvalidDecimalChar.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that `ParseInvalidDecimalChar` from the inner unsigned parse
+    /// propagates through the signed conversion with a zero value, for
+    /// invalid bytes with and without a leading negative sign.
+    function testUnsafeStrToSignedIntInvalidCharPropagates() external pure {
+        checkUnsafeStrToSignedIntInvalid("-1a");
+        checkUnsafeStrToSignedIntInvalid(" 1");
+        checkUnsafeStrToSignedIntInvalid("+5");
+        checkUnsafeStrToSignedIntInvalid("-1.5");
+    }
+
+    /// Test the sign entry edges. `+` is not a recognized sign, so it reaches
+    /// the inner unsigned parse and classifies as an invalid decimal
+    /// character. A consumed leading `-` still subjects every byte after it to
+    /// the digit check, so an invalid byte after the sign is invalid too.
+    function testUnsafeStrToSignedIntSignEdges() external pure {
+        checkUnsafeStrToSignedIntInvalid("+5");
+        checkUnsafeStrToSignedIntInvalid("-a5");
+    }
+
+    function checkUnsafeStrToSignedIntInvalid(string memory input) internal pure {
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+        assertEq(errorSelector, ParseInvalidDecimalChar.selector);
         assertEq(result, 0);
     }
 
