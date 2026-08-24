@@ -123,20 +123,25 @@ library LibParseDecimal {
 
             // Handle positive value.
             if (isNeg == 0) {
-                // typecast is safe because we know that value is less than or equal
-                // to type(int256).max.
+                if (value > uint256(type(int256).max)) {
+                    return (ParseDecimalOverflow.selector, 0);
+                }
+                // typecast is safe because we know that value is less than or
+                // equal to type(int256).max.
                 // forge-lint: disable-next-line(unsafe-typecast)
-                return (value > uint256(type(int256).max) ? ParseDecimalOverflow.selector : bytes4(0), int256(value));
+                return (bytes4(0), int256(value));
             }
 
             // Fallback to negative value.
+            if (value > uint256(type(int256).max) + 1) {
+                return (ParseDecimalOverflow.selector, 0);
+            }
             // typecast is safe because we know that value is less than or equal
-            // to type(int256).max + 1.
-            // This looks bad if `value == type(int256).max + 1`, because that is
-            // an overflow, but we do get the correct result, and there is a test
-            // for that.
+            // to type(int256).max + 1. When `value == type(int256).max + 1` the
+            // cast wraps to type(int256).min, and negating type(int256).min is
+            // itself, which is the correct result.
             // forge-lint: disable-next-line(unsafe-typecast)
-            return (value > uint256(type(int256).max) + 1 ? ParseDecimalOverflow.selector : bytes4(0), -int256(value));
+            return (bytes4(0), -int256(value));
         }
     }
 }
