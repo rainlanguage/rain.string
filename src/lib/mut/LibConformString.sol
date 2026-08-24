@@ -14,35 +14,57 @@ import {EmptyStringMask} from "../../error/ErrConform.sol";
 /// or only accept hex digits.
 library LibConformString {
     /// Main workhorse function for the lib. Brute forces each character in the
-    /// string until it finds one that is in the mask. The `max` parameter is
-    /// used to limit the range of characters that are generated. For example, if
-    /// the mask only includes ASCII characters, then `max` should be set to 128
-    /// to avoid generating characters outside of the ASCII range. Max is an
-    /// exclusive upper bound, relative to 0 indexed character values.
+    /// string until it finds one that is in the mask: characters whose bit is
+    /// already set in the mask are kept as-is, all others are rerolled until
+    /// they land in it, so every character of the conformed string has its bit
+    /// set in the mask. Rerolled candidates are generated in the range
+    /// [0, bit length of the mask), i.e. up to and including the mask's
+    /// highest set bit, so the highest character in the mask is always
+    /// generatable and the search always terminates.
     /// This function uses a simple linear probing algorithm to find a valid
     /// character. It is not the most efficient algorithm, but it is simple and
     /// effective for this use case.
     /// @param str The string to conform. This string is mutated in place.
-    /// @param mask The character mask to conform to.
-    /// @param max The maximum character value to generate. This is used to
-    /// limit the range of characters that are generated.
-    function conformStringToMask(string memory str, uint256 mask, uint256 max) internal pure {
-        unchecked {
-            if (mask == 0 || max == 0) {
-                revert EmptyStringMask();
-            }
-            // When this is unchecked, if max >= 256, then (1 << max) will
-            // overflow to 0, which then underflows on the -1 anyway to
-            // produce type(uint256).max, which is what we want.
-            // The more normal case is when max < 256, in which case we get
-            // (1 << max) - 1 producing a mask with the lower `max` bits set.
-            // We can then AND that with the provided mask to see if any of
-            // the lower `max` bits are set in the provided mask. This prevents
-            // us from getting stuck in an infinite loop if the mask does not
-            // include any characters in the range [0, max).
-            if (((1 << max) - 1) & mask == 0) {
-                revert EmptyStringMask();
-            }
+    /// @param mask The character mask to conform to. Must be nonzero or
+    /// `EmptyStringMask` is thrown.
+    function conformStringToMask(string memory str, uint256 mask) internal pure {
+        if (mask == 0) {
+            revert EmptyStringMask();
+        }
+
+        // The reroll modulus is the bit length of the mask: the index of its
+        // highest set bit plus one. Candidates are generated strictly below
+        // it, which keeps them near the mask while still reaching every set
+        // bit. Branchless binary search: each step tests whether the reduced
+        // mask still has a bit at or above the step's width, and if so shifts
+        // it down by that width and adds the width to the accumulated length.
+        // `s` is the step's shift amount, either the width or zero.
+        uint256 max;
+        assembly ("memory-safe") {
+            max := 1
+            let m := mask
+            let s := shl(7, iszero(iszero(shr(128, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(6, iszero(iszero(shr(64, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(5, iszero(iszero(shr(32, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(4, iszero(iszero(shr(16, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(3, iszero(iszero(shr(8, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(2, iszero(iszero(shr(4, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            s := shl(1, iszero(iszero(shr(2, m))))
+            m := shr(s, m)
+            max := add(max, s)
+            max := add(max, iszero(iszero(shr(1, m))))
         }
 
         uint256 seed = 0;
@@ -55,8 +77,8 @@ library LibConformString {
                     mstore(0, char)
                     mstore(0x20, seed)
                     seed := keccak256(0, 0x40)
-                    // Eliminate everything out of range to give us a better
-                    // chance of hitting the mask.
+                    // Bound candidates to the mask's bit length to give us a
+                    // better chance of hitting the mask.
                     char := mod(byte(0, seed), max)
                 }
             }
@@ -65,32 +87,25 @@ library LibConformString {
         }
     }
 
-    /// Overload that assumes ASCII range.
-    function conformStringToMask(string memory str, uint256 mask) internal pure {
-        // Assume that we want to restrict to ASCII range.
-        conformStringToMask(str, mask, 0x80);
-    }
-
-    /// Overload that explicitly conforms to ASCII.
+    /// Conforms the string to the full ASCII character set.
     function conformStringToAscii(string memory str) internal pure {
-        conformStringToMask(str, type(uint128).max, 0x80);
+        conformStringToMask(str, type(uint128).max);
     }
 
-    /// Overload that explicitly conforms to ASCII hex digits.
+    /// Conforms the string to ASCII hex digit characters.
     function conformStringToHexDigits(string memory str) internal pure {
-        // 0x7B is '{' which is just after 'z'.
-        conformStringToMask(str, CMASK_HEX, 0x7B);
+        conformStringToMask(str, CMASK_HEX);
     }
 
-    /// Overload that explicitly conforms to printable ASCII characters.
+    /// Conforms the string to printable characters that are valid string
+    /// literal content.
     function conformValidPrintableStringContent(string memory str) internal pure {
-        conformStringToMask(str, CMASK_STRING_LITERAL_TAIL, 0x80);
+        conformStringToMask(str, CMASK_STRING_LITERAL_TAIL);
     }
 
-    /// Overload that explicitly conforms to whitespace characters.
+    /// Conforms the string to whitespace characters.
     function conformStringToWhitespace(string memory str) internal pure {
-        // 33 is ! which is after space.
-        conformStringToMask(str, CMASK_WHITESPACE, 33);
+        conformStringToMask(str, CMASK_WHITESPACE);
     }
 
     /// Ensures the character at the specified index is not a valid character

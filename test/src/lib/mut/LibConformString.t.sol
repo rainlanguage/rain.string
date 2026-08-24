@@ -11,8 +11,8 @@ import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "src/lib/pa
 import {EmptyStringMask} from "src/error/ErrConform.sol";
 
 contract LibConformStringTest is Test {
-    function externalConformStringToMask(string memory str, uint256 mask, uint256 max) external pure {
-        LibConformString.conformStringToMask(str, mask, max);
+    function externalConformStringToMask(string memory str, uint256 mask) external pure {
+        LibConformString.conformStringToMask(str, mask);
     }
 
     function externalCharFromMask(uint256 seed, uint256 mask) external pure returns (bytes1) {
@@ -24,30 +24,13 @@ contract LibConformStringTest is Test {
         return str;
     }
 
-    function testConformStringZeroMaskRevert(string memory s, uint256 max) external {
+    /// A zero mask reverts before any character is processed, so even the
+    /// empty string reverts.
+    function testConformStringZeroMaskRevert() external {
         vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
-        this.externalConformStringToMask(s, 0, max);
-    }
-
-    function testConformStringZeroMaxRevert(string memory s, uint256 mask) external {
+        this.externalConformStringToMask("", 0);
         vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
-        this.externalConformStringToMask(s, mask, 0);
-    }
-
-    function testConformStringMaxNoPossibleCharsRevert(string memory s, uint256 mask, uint256 max) external {
-        vm.assume(max < 0x100);
-        // Ensure that there are no possible characters in the mask
-        uint256 limitedMask = mask & ((1 << max) - 1);
-        vm.assume(limitedMask == 0);
-        vm.expectRevert(abi.encodeWithSelector(EmptyStringMask.selector));
-        this.externalConformStringToMask(s, mask, max);
-    }
-
-    function testConformStringMax256OrHigherNeverReverts(string memory s, uint256 mask, uint256 max) external view {
-        max = bound(max, 0x100, type(uint256).max);
-        vm.assume(mask != 0);
-        // This should never revert, as all characters are possible.
-        this.externalConformStringToMask(s, mask, max);
+        this.externalConformStringToMask("abc", 0);
     }
 
     function testCharFromZeroMaskRevert(uint256 seed) external {
@@ -58,7 +41,7 @@ contract LibConformStringTest is Test {
     function testConformStringFuzz(string memory s, uint256 mask) external pure {
         vm.assume(mask != 0);
 
-        LibConformString.conformStringToMask(s, mask, 0x100);
+        LibConformString.conformStringToMask(s, mask);
 
         uint256 cursor;
         uint256 end;
@@ -87,7 +70,7 @@ contract LibConformStringTest is Test {
         string memory sInit = new string(1);
         bytes(sInit)[0] = c;
 
-        LibConformString.conformStringToMask(s, mask, type(uint256).max);
+        LibConformString.conformStringToMask(s, mask);
         assertEq(s, sInit);
 
         uint256 sInitPointer;
@@ -99,25 +82,34 @@ contract LibConformStringTest is Test {
         assertTrue(sPointer != sInitPointer);
     }
 
-    /// max == 1 is valid as long as the mask includes the null character, and
-    /// every character not already in the mask is rewritten to it.
-    function testConformStringMaxOne() external pure {
+    /// A mask of just the null character rewrites every character to null.
+    function testConformStringNullMaskOnly() external pure {
         string memory s = "abc";
-        LibConformString.conformStringToMask(s, 1, 1);
+        LibConformString.conformStringToMask(s, 1);
         assertEq(s, "\x00\x00\x00");
     }
 
-    /// Characters are always generated strictly below max, so a mask bit at or
-    /// above max is only reachable for characters that already have it. Here
-    /// 0x20 is the only mask bit below max, so every rewritten character must
-    /// land on it.
-    function testConformStringGeneratedCharsBelowMax() external pure {
-        uint256 mask = (1 << 0x20) | (1 << 0xC3);
+    /// The generation range covers the whole mask: a mask holding only the
+    /// highest possible bit conforms every character to it.
+    function testConformStringHighBitOnlyMask() external pure {
         // A fresh string is all null bytes, none of which are in the mask.
         string memory s = new string(64);
-        LibConformString.conformStringToMask(s, mask, 0x30);
+        LibConformString.conformStringToMask(s, 1 << 0xFF);
         for (uint256 i = 0; i < bytes(s).length; i++) {
-            assertEq(uint8(bytes(s)[i]), 0x20);
+            assertEq(uint8(bytes(s)[i]), 0xFF);
+        }
+    }
+
+    /// Every conformed character has its bit set in the mask: with two mask
+    /// bits, one above the ASCII range, every character lands on one of the
+    /// two.
+    function testConformStringSparseHighMask() external pure {
+        uint256 mask = (1 << 0x41) | (1 << 0xC3);
+        string memory s = new string(64);
+        LibConformString.conformStringToMask(s, mask);
+        for (uint256 i = 0; i < bytes(s).length; i++) {
+            uint256 char = uint256(uint8(bytes(s)[i]));
+            assertTrue(char == 0x41 || char == 0xC3);
         }
     }
 
@@ -126,22 +118,20 @@ contract LibConformStringTest is Test {
     function testConformStringDeterminism(string memory a, uint256 mask) external pure {
         vm.assume(mask != 0);
         string memory orig = string(bytes.concat(bytes(a)));
-        LibConformString.conformStringToMask(a, mask, 0x100);
+        LibConformString.conformStringToMask(a, mask);
         string memory b = string(bytes.concat(bytes(orig)));
-        LibConformString.conformStringToMask(b, mask, 0x100);
+        LibConformString.conformStringToMask(b, mask);
         assertEq(a, b);
     }
 
-    /// The 2-arg overload restricts generated characters to the ASCII range.
-    /// 0x41 is the only mask bit below 0x80, so every rewritten character must
-    /// land on it even though the mask also has a bit above the ASCII range.
-    function testConformStringTwoArgOverloadAsciiRange() external pure {
-        uint256 mask = (1 << 0x41) | (1 << 0xC3);
-        string memory s = new string(64);
-        LibConformString.conformStringToMask(s, mask);
-        for (uint256 i = 0; i < bytes(s).length; i++) {
-            assertEq(uint8(bytes(s)[i]), 0x41);
-        }
+    /// Expected value comes from a keccak walk computed with cast, outside the
+    /// implementation: each candidate is the first byte of
+    /// keccak256(abi.encode(char, seed)) modulo the mask's bit length (0x21
+    /// for whitespace), walked until a candidate lands in the mask.
+    function testConformStringKnownWalk() external pure {
+        string memory s = "a";
+        LibConformString.conformStringToMask(s, CMASK_WHITESPACE);
+        assertEq(uint8(bytes(s)[0]), 0x0D);
     }
 
     /// conformStringToAscii rewrites every non-ASCII byte to an ASCII one and
