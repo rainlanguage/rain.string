@@ -6,7 +6,12 @@ import {Test} from "forge-std-1.16.1/src/Test.sol";
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
-import {ParseEmptyDecimalString, ParseDecimalOverflow, ZeroStringStartPointer} from "src/error/ErrParse.sol";
+import {
+    ParseEmptyDecimalString,
+    ParseDecimalOverflow,
+    ParseInvalidDecimalChar,
+    ZeroStringStartPointer
+} from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToInt
 /// @dev Test `TestLibParseDecimal.unsafeDecimalStringToInt`
@@ -161,5 +166,96 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
 
         assertEq(errorSelector, ParseDecimalOverflow.selector);
         assertEq(result, 0);
+    }
+
+    function checkUnsafeStrToIntInvalid(string memory input) internal pure {
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+        assertEq(errorSelector, ParseInvalidDecimalChar.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that a string exercising every decimal digit parses to its exact
+    /// value.
+    function testUnsafeDecimalStrToIntAllDigits() external pure {
+        string memory input = "9876543210";
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+        assertEq(errorSelector, bytes4(0));
+        assertEq(result, 9876543210);
+    }
+
+    /// Test that a byte outside `0`-`9` inside the last-77-character window
+    /// yields `ParseInvalidDecimalChar` wherever it sits, including the
+    /// boundary bytes immediately adjacent to the digit range.
+    function testUnsafeDecimalStrToIntInvalidCharInWindow() external pure {
+        checkUnsafeStrToIntInvalid(" 1");
+        checkUnsafeStrToIntInvalid("1 ");
+        checkUnsafeStrToIntInvalid("12 34");
+        checkUnsafeStrToIntInvalid("a");
+        // 0x2F, one below the `0` byte.
+        checkUnsafeStrToIntInvalid("1/1");
+        // 0x3A, one above the `9` byte.
+        checkUnsafeStrToIntInvalid("1:1");
+    }
+
+    /// Test that any byte outside `0`-`9` at any position in an otherwise
+    /// valid decimal string yields `ParseInvalidDecimalChar` and a zero value.
+    function testUnsafeDecimalStrToIntInvalidCharAnywhere(uint256 value, uint8 invalidByte, uint256 position)
+        external
+        pure
+    {
+        vm.assume(invalidByte < 0x30 || invalidByte > 0x39);
+        bytes memory input = bytes(value.toString());
+        position = bound(position, 0, input.length - 1);
+        input[position] = bytes1(invalidByte);
+
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
+            Pointer.unwrap(input.dataPointer()), Pointer.unwrap(input.endDataPointer())
+        );
+        assertEq(errorSelector, ParseInvalidDecimalChar.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that a byte outside `0`-`9` at the 78th-from-last position yields
+    /// `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`.
+    function testUnsafeDecimalStrToIntInvalidCharAt78th() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("a", zeros)));
+    }
+
+    /// Test that a byte outside `0`-`9` beyond the 78th-from-last position
+    /// yields `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`.
+    function testUnsafeDecimalStrToIntInvalidCharBeyond78() external pure {
+        string memory zeros = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros)[i] = "0";
+        }
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("a1", zeros)));
+    }
+
+    /// Test that when the region contains both an invalid byte and a digit
+    /// that would overflow a uint256, `ParseInvalidDecimalChar` wins
+    /// regardless of their relative positions.
+    function testUnsafeDecimalStrToIntInvalidCharWinsOverOverflow() external pure {
+        string memory zeros76 = new string(76);
+        for (uint256 i = 0; i < 76; i++) {
+            bytes(zeros76)[i] = "0";
+        }
+        string memory zeros77 = new string(77);
+        for (uint256 i = 0; i < 77; i++) {
+            bytes(zeros77)[i] = "0";
+        }
+        // `5` at the 78th-from-last position would overflow; `a` sits inside
+        // the last-77-character window.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("5a", zeros76)));
+        // `5` at the 78th-from-last position would overflow; `a` sits beyond
+        // the 78th.
+        checkUnsafeStrToIntInvalid(string(abi.encodePacked("a5", zeros77)));
     }
 }
