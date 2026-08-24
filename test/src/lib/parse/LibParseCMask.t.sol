@@ -168,9 +168,9 @@ import {
     CMASK_INTERSTITIAL_HEAD,
     COMMENT_START_SEQUENCE,
     COMMENT_END_SEQUENCE,
-    CMASK_COMMENT_END_SEQUENCE_END,
+    COMMENT_END_SEQUENCE_END,
     CMASK_LITERAL_HEX_DISPATCH,
-    CMASK_LITERAL_HEX_DISPATCH_START
+    LITERAL_HEX_DISPATCH_START_SEQUENCE
 } from "src/lib/parse/LibParseCMask.sol";
 
 /// @title LibParseCMaskTest
@@ -397,7 +397,7 @@ contract LibParseCMaskTest is Test {
     function testCMaskSequences() external pure {
         assertEq(COMMENT_START_SEQUENCE, 0x2F2A); // "/*"
         assertEq(COMMENT_END_SEQUENCE, 0x2A2F); // "*/"
-        assertEq(CMASK_COMMENT_END_SEQUENCE_END, 0x2F); // "/"
-        assertEq(CMASK_LITERAL_HEX_DISPATCH_START, 0x3078); // "0x"
+        assertEq(COMMENT_END_SEQUENCE_END, 0x2F); // "/"
+        assertEq(LITERAL_HEX_DISPATCH_START_SEQUENCE, 0x3078); // "0x"
     }
 }

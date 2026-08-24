@@ -636,11 +636,9 @@ uint256 constant COMMENT_START_SEQUENCE = uint256(uint16(bytes2("/*")));
 uint256 constant COMMENT_END_SEQUENCE = uint256(uint16(bytes2("*/")));
 
 /// @dev Rainlang comment end sequence end byte is / i.e. the last byte of */
-/// This is the byte VALUE 0x2F, NOT a 1-bit-per-char mask, despite the CMASK_
-/// prefix. Passing it to LibParseChar.isMask/skipMask compiles but silently
-/// matches the unrelated char set its bits select ({0x00, 0x01, 0x02, 0x03,
-/// 0x05}) instead of the / char. Compare it directly against a byte value.
-uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
+/// This is a byte VALUE (0x2F), not a char mask; compare it directly against
+/// a single byte.
+uint256 constant COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 
 /// @dev Rainlang literal hexadecimal dispatch is 0x
 /// We compare the head and dispatch together to avoid a second comparison.
@@ -649,9 +647,7 @@ uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 uint128 constant CMASK_LITERAL_HEX_DISPATCH = CMASK_ZERO | CMASK_LOWER_X;
 
 /// @dev The exact 2-byte sequence 0x i.e. 0x3078 that starts a hex literal.
-/// This is a byte-sequence VALUE, NOT a 1-bit-per-char mask, despite the
-/// CMASK_ prefix. Passing it to LibParseChar.isMask/skipMask compiles but
-/// silently matches the unrelated char set its bits select instead of the 0
-/// and x chars. Compare it directly against a 2-byte value.
+/// This is a byte-sequence VALUE, not a char mask; compare it directly
+/// against a 2-byte value.
 // forge-lint: disable-next-line(unsafe-typecast)
-uint256 constant CMASK_LITERAL_HEX_DISPATCH_START = uint256(uint16(bytes2("0x")));
+uint256 constant LITERAL_HEX_DISPATCH_START_SEQUENCE = uint256(uint16(bytes2("0x")));
