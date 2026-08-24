@@ -17,6 +17,10 @@ library LibParseDecimal {
     /// @param end The end of the memory region containing the decimal ASCII
     /// string.
     /// @return The error selector if the conversion failed, `0` otherwise.
+    /// The selector is returned bare: `ParseEmptyDecimalString` and
+    /// `ParseDecimalOverflow` declare a `uint256 position` parameter, but
+    /// this library does not know the caller's position, so a caller that
+    /// reverts with the selector appends its own position.
     /// @return The unsigned integer representation of the ASCII string.
     /// ALWAYS check the error selector before using the value.
     function unsafeDecimalStringToInt(uint256 start, uint256 end) internal pure returns (bytes4, uint256) {
@@ -43,9 +47,9 @@ library LibParseDecimal {
             // Anything under 10^77 is safe to raise to its power of 10 without
             // overflowing a uint256.
             while (cursor >= start && exponent < 77) {
-                // We don't need to check the bounds of the byte because
-                // we know it is a decimal literal as long as the bounds
-                // are correct (calculated in `boundLiteral`).
+                // The byte is not checked to be a decimal digit;
+                // ensuring the region contains only decimal characters
+                // is the caller's responsibility.
                 assembly ("memory-safe") {
                     value := add(value, mul(sub(byte(0, mload(cursor)), digitOffset), exp(10, exponent)))
                 }
@@ -108,6 +112,9 @@ library LibParseDecimal {
     /// string.
     /// @return Whether the conversion was successful. If `0`, this is
     /// due to an overflow, if `1` the conversion was successful.
+    /// On failure the error selector is returned bare, without the
+    /// `uint256 position` argument its declaration carries; a caller that
+    /// reverts with the selector appends its own position.
     /// @return The signed integer representation of the ASCII string.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {
         unchecked {
