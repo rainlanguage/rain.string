@@ -9,8 +9,18 @@ import {ParseDecimalOverflow, ParseEmptyDecimalString, ZeroStringStartPointer} f
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
     /// integer.
-    /// DOES NOT check that the string contains valid decimal characters. You can
-    /// use `LibParseChar.skipMask` to easily bound some valid decimal characters.
+    /// DOES NOT check that the string contains valid decimal characters. The
+    /// consequence of a byte outside `'0'`-`'9'` depends on its position:
+    /// - Within the last 77 characters it is never detected: `byte - '0'`
+    ///   wraps in unchecked arithmetic and corrupts the value, which is
+    ///   returned under a SUCCESS selector. E.g. a 2-byte region `" 1"`
+    ///   (space, one) returns `(bytes4(0), 2^256 - 159)`.
+    /// - At the 78th-from-last character or earlier it returns
+    ///   `ParseDecimalOverflow`, even when the string does not represent an
+    ///   overflowing number.
+    /// Because invalid input can be reported as success, callers MUST bound
+    /// the region to valid decimal characters first, e.g. with
+    /// `LibParseChar.skipMask` over `CMASK_NUMERIC_0_9`.
     /// DOES check for unsigned integer overflow.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
@@ -101,7 +111,12 @@ library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a signed
     /// integer.
     /// DOES NOT check that the string contains valid decimal characters and/or
-    /// a negative sign.
+    /// a negative sign. Inherits the invalid-byte behaviour of
+    /// `unsafeDecimalStringToInt`: a byte outside `'0'`-`'9'` within the last
+    /// 77 characters silently corrupts the value, which is then returned
+    /// under a SUCCESS selector whenever it passes the `int256` range checks
+    /// (and as a spurious `ParseDecimalOverflow` otherwise), so callers MUST
+    /// bound the region to valid characters first.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
