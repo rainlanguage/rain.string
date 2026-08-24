@@ -172,6 +172,9 @@ import {
     CMASK_LITERAL_HEX_DISPATCH,
     LITERAL_HEX_DISPATCH_START_SEQUENCE
 } from "src/lib/parse/LibParseCMask.sol";
+import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
+import {Pointer} from "rain-solmem-0.1.26/src/lib/LibPointer.sol";
+import {LibBytes} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 
 /// @title LibParseCMaskTest
 /// @notice Pins every character mask constant to its ASCII semantics. Expected
@@ -179,6 +182,8 @@ import {
 /// positions, and composite masks are rebuilt independently from their
 /// documented character sets.
 contract LibParseCMaskTest is Test {
+    using LibBytes for bytes;
+
     /// Builds a mask with one bit set for every character code in the
     /// inclusive range [lo, hi].
     function rangeMask(uint256 lo, uint256 hi) internal pure returns (uint256 mask) {
@@ -368,8 +373,8 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_IDENTIFIER_TAIL, identifierTail);
         assertEq(CMASK_LHS_STACK_TAIL, identifierTail);
         assertEq(CMASK_RHS_WORD_TAIL, identifierTail);
-        // The complement is relative to the 128 bit mask domain.
-        assertEq(CMASK_NOT_IDENTIFIER_TAIL, ~identifierTail & type(uint128).max);
+        // The complement is over the full byte domain.
+        assertEq(CMASK_NOT_IDENTIFIER_TAIL, ~identifierTail);
 
         uint256 whitespace = (1 << 0x09) | (1 << 0x0A) | (1 << 0x0D) | (1 << 0x20); // \t \n \r space
         assertEq(CMASK_WHITESPACE, whitespace);
@@ -399,5 +404,33 @@ contract LibParseCMaskTest is Test {
         assertEq(COMMENT_END_SEQUENCE, 0x2A2F); // "*/"
         assertEq(COMMENT_END_SEQUENCE_END, 0x2F); // "/"
         assertEq(LITERAL_HEX_DISPATCH_START_SEQUENCE, 0x3078); // "0x"
+    }
+
+    /// CMASK_IDENTIFIER_TAIL and CMASK_NOT_IDENTIFIER_TAIL partition the full
+    /// byte domain: they are disjoint and together cover every byte 0x00-0xFF,
+    /// with every high byte 0x80-0xFF on the NOT side.
+    function testCMaskNotIdentifierTailPartitionsByteDomain() external pure {
+        assertEq(CMASK_IDENTIFIER_TAIL | CMASK_NOT_IDENTIFIER_TAIL, type(uint256).max);
+        assertEq(CMASK_IDENTIFIER_TAIL & CMASK_NOT_IDENTIFIER_TAIL, 0);
+        for (uint256 c = 0x80; c <= 0xFF; c++) {
+            assertEq((1 << c) & CMASK_NOT_IDENTIFIER_TAIL, 1 << c);
+        }
+    }
+
+    /// The consumer-visible form of the mask domains: reading any byte
+    /// 0x80-0xFF through LibParseChar.isMask misses CMASK_IDENTIFIER_TAIL and
+    /// CMASK_PRINTABLE, whose bits 0x80-0xFF are unset, but hits
+    /// CMASK_NOT_IDENTIFIER_TAIL, which complements over the full byte domain.
+    function testCMaskHighBytesIsMask() external pure {
+        for (uint256 c = 0x80; c <= 0xFF; c++) {
+            bytes memory data = new bytes(1);
+            // forge-lint: disable-next-line(unsafe-typecast)
+            data[0] = bytes1(uint8(c));
+            uint256 cursor = Pointer.unwrap(data.dataPointer());
+            uint256 end = Pointer.unwrap(data.endDataPointer());
+            assertEq(LibParseChar.isMask(cursor, end, CMASK_IDENTIFIER_TAIL), 0);
+            assertEq(LibParseChar.isMask(cursor, end, CMASK_NOT_IDENTIFIER_TAIL), 1);
+            assertEq(LibParseChar.isMask(cursor, end, CMASK_PRINTABLE), 0);
+        }
     }
 }
