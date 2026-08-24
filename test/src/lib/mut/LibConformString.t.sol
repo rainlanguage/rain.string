@@ -252,16 +252,48 @@ contract LibConformStringTest is Test {
     }
 
     /// A byte that is already outside the string literal tail mask (and is not
-    /// a double quote) is written back unchanged.
+    /// a double quote) is written back unchanged, including bytes above the
+    /// ASCII range.
     function testCorruptSingleCharAlreadyInvalid() external pure {
-        bytes memory b = hex"001f7f";
+        bytes memory b = hex"001f7f80ff";
         string memory s = string(b);
         LibConformString.corruptSingleChar(s, 0);
         LibConformString.corruptSingleChar(s, 1);
         LibConformString.corruptSingleChar(s, 2);
+        LibConformString.corruptSingleChar(s, 3);
+        LibConformString.corruptSingleChar(s, 4);
         assertEq(uint8(bytes(s)[0]), 0x00);
         assertEq(uint8(bytes(s)[1]), 0x1F);
         assertEq(uint8(bytes(s)[2]), 0x7F);
+        assertEq(uint8(bytes(s)[3]), 0x80);
+        assertEq(uint8(bytes(s)[4]), 0xFF);
+    }
+
+    /// The corruption alphabet covers the full byte range: sweeping every
+    /// valid string literal tail byte as the starting character, every
+    /// deterministic corruption result is outside the string literal tail
+    /// mask and is not a double quote, and at least one result is a byte
+    /// above the ASCII range.
+    function testCorruptSingleCharHighByteReachable() external pure {
+        uint256 highByteCount = 0;
+        for (uint256 c = 0; c < 0x100; c++) {
+            // forge-lint: disable-next-line(incorrect-shift)
+            if ((1 << c) & uint256(CMASK_STRING_LITERAL_TAIL) == 0) {
+                continue;
+            }
+            string memory s = new string(1);
+            // forge-lint: disable-next-line(unsafe-typecast)
+            bytes(s)[0] = bytes1(uint8(c));
+            LibConformString.corruptSingleChar(s, 0);
+            uint256 char = uint256(uint8(bytes(s)[0]));
+            // forge-lint: disable-next-line(incorrect-shift)
+            assertTrue((1 << char) & uint256(CMASK_STRING_LITERAL_TAIL) == 0);
+            assertTrue(char != uint256(uint8(bytes1("\""))));
+            if (char >= 0x80) {
+                highByteCount++;
+            }
+        }
+        assertTrue(highByteCount > 0);
     }
 
     /// An index at the end of the string is out of bounds and panics.
@@ -277,11 +309,32 @@ contract LibConformStringTest is Test {
         this.externalCorruptSingleChar(s, index);
     }
 
-    /// The character search starts at 0, so any mask with the null bit set
-    /// yields the null character for every seed.
-    function testCharFromMaskBitZero(uint256 seed, uint256 mask) external pure {
-        mask |= 1;
-        assertEq(uint8(LibConformString.charFromMask(seed, mask)), 0);
+    /// A mask with bit 0 set does not swallow the seed: the seed selects
+    /// among the conforming characters.
+    function testCharFromMaskBitZeroSeedSelects() external pure {
+        uint256 mask = 1 | (1 << 0x41);
+        assertEq(uint8(LibConformString.charFromMask(0, mask)), 0);
+        assertEq(uint8(LibConformString.charFromMask(0x41, mask)), 0x41);
+    }
+
+    /// The first candidate is the low byte of the seed, so any seed whose low
+    /// byte is in the mask selects it directly: every set bit of the mask is
+    /// selected by at least one seed, including bit 0.
+    function testCharFromMaskLowByteSelected(uint256 seed, uint256 mask) external pure {
+        uint256 char = seed & 0xFF;
+        // forge-lint: disable-next-line(incorrect-shift)
+        mask |= 1 << char;
+        assertEq(uint8(LibConformString.charFromMask(seed, mask)), char);
+    }
+
+    /// When the low byte of the seed misses the mask, candidates reroll by
+    /// hashing the candidate with the full seed, so seeds sharing a low byte
+    /// still select independently. 0x01 is not a hex digit character, so both
+    /// walks reroll. Expected values come from a keccak walk computed with
+    /// cast, outside the implementation.
+    function testCharFromMaskRerollUsesFullSeed() external pure {
+        assertEq(uint8(LibConformString.charFromMask(0x01, uint256(CMASK_HEX))), uint8(bytes1("d")));
+        assertEq(uint8(LibConformString.charFromMask(0x0101, uint256(CMASK_HEX))), uint8(bytes1("2")));
     }
 
     /// charFromMask is deterministic in (seed, mask) regardless of surrounding

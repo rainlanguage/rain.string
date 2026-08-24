@@ -97,12 +97,12 @@ library LibConformString {
         conformStringToMask(str, CMASK_WHITESPACE, 33);
     }
 
-    /// Corrupts a single character in the string to some random byte value in
-    /// a rather inefficient way. This is primarily useful for testing
+    /// Ensures the character at the specified index is not a valid character
+    /// in a string literal (i.e., not in the CMASK_STRING_LITERAL_TAIL mask)
+    /// and is not a double quote. This is primarily useful for testing
     /// purposes, e.g., to test that a parser correctly rejects invalid input.
-    /// The character at the specified index is replaced with a random byte
-    /// value that is not a valid character in a string literal (i.e., not in
-    /// the CMASK_STRING_LITERAL_TAIL mask) and is not a double quote.
+    /// A character that is already invalid and not a double quote is kept
+    /// as-is; any other character is replaced with a random such byte value.
     /// @param str The string to corrupt. This string is mutated in place.
     /// @param index The index of the character to corrupt.
     function corruptSingleChar(string memory str, uint256 index) internal pure {
@@ -121,17 +121,20 @@ library LibConformString {
         bytes(str)[index] = bytes1(uint8(char));
     }
 
-    /// Generates a single character from the given mask using the provided
-    /// seed. This is useful for generating random characters that conform to a
-    /// specific character set.
-    /// @param seed The seed to use for generating the character.
+    /// Deterministically selects a single character from the given mask using
+    /// the provided seed. The first candidate is the low byte of the seed;
+    /// while the candidate misses the mask it is rerolled as the top byte of
+    /// the keccak256 hash of the candidate and the evolving seed. The result
+    /// is always in the mask, and every set bit of the mask is selected by at
+    /// least one seed (at minimum the seed equal to that bit's index).
+    /// @param seed Selects which conforming character is produced.
     /// @param mask The character mask to conform to.
-    /// @return The generated character.
+    /// @return The selected character. Always in the mask.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
         if (mask == 0) {
             revert EmptyStringMask();
         }
-        uint256 char = 0;
+        uint256 char = seed & 0xFF;
         // forge-lint: disable-next-line(incorrect-shift)
         while (1 << char & mask == 0) {
             assembly ("memory-safe") {
