@@ -2,6 +2,12 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
+// Every CMASK_* constant in this file is a mask over 7-bit ASCII only: bit N
+// of the uint128 is set iff byte N (0x00-0x7F) is in the set. Bytes 0x80-0xFF
+// are never in any mask, even though consumers accept masks as uint256 and
+// index them by a full byte value; the high 128 bits of a widened mask are
+// always zero.
+
 /// @dev Workaround for https://github.com/foundry-rs/foundry/issues/6572
 contract LibParseCMask {}
 
@@ -517,7 +523,7 @@ uint128 constant CMASK_TILDE = uint128(1) << uint128(uint8(bytes1("~")));
 // forge-lint: disable-next-line(unsafe-typecast)
 uint128 constant CMASK_DELETE = uint128(1) << uint128(uint8(bytes1("\x7F")));
 
-/// @dev ASCII printable characters is everything 0x20 and above, except 0x7F
+/// @dev ASCII printable characters is 0x20-0x7E inclusive.
 uint128 constant CMASK_PRINTABLE =
     ~(CMASK_NULL | CMASK_START_OF_HEADING | CMASK_START_OF_TEXT | CMASK_END_OF_TEXT | CMASK_END_OF_TRANSMISSION
         | CMASK_ENQUIRY | CMASK_ACKNOWLEDGE | CMASK_BELL | CMASK_BACKSPACE | CMASK_HORIZONTAL_TAB | CMASK_LINE_FEED
@@ -590,7 +596,10 @@ uint128 constant CMASK_OPERAND_START = CMASK_LESS_THAN_SIGN;
 /// @dev Rainlang operand end is >
 uint128 constant CMASK_OPERAND_END = CMASK_GREATER_THAN_SIGN;
 
-/// @dev NOT lower alphanumeric kebab
+/// @dev Complement of CMASK_IDENTIFIER_TAIL within the 128-bit mask domain:
+/// every 7-bit ASCII char that is not lower alphanumeric kebab. Bytes
+/// 0x80-0xFF are in neither this mask nor CMASK_IDENTIFIER_TAIL, so the two
+/// masks do not partition the full byte domain.
 uint128 constant CMASK_NOT_IDENTIFIER_TAIL = ~CMASK_IDENTIFIER_TAIL;
 
 /// @dev Rainlang whitespace is \n \r \t space
