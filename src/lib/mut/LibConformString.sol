@@ -118,17 +118,20 @@ library LibConformString {
         bytes(str)[index] = bytes1(uint8(char));
     }
 
-    /// Generates a single character from the given mask using the provided
-    /// seed. This is useful for generating random characters that conform to a
-    /// specific character set.
-    /// @param seed The seed to use for generating the character.
+    /// Deterministically selects a single character from the given mask using
+    /// the provided seed. The first candidate is the low byte of the seed;
+    /// while the candidate misses the mask it is rerolled as the top byte of
+    /// the keccak256 hash of the candidate and the evolving seed. The result
+    /// is always in the mask, and every set bit of the mask is selected by at
+    /// least one seed (at minimum the seed equal to that bit's index).
+    /// @param seed Selects which conforming character is produced.
     /// @param mask The character mask to conform to.
-    /// @return The generated character.
+    /// @return The selected character. Always in the mask.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
         if (mask == 0) {
             revert EmptyStringMask();
         }
-        uint256 char = 0;
+        uint256 char = seed & 0xFF;
         // forge-lint: disable-next-line(incorrect-shift)
         while (1 << char & mask == 0) {
             assembly ("memory-safe") {
