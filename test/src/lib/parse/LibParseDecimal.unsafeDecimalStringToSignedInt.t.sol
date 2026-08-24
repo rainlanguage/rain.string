@@ -23,6 +23,39 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         this.externalTestZeroStringStartPointer(end);
     }
 
+    /// Writes a negative sign byte into scratch space at address zero before
+    /// calling the signed conversion with a zero start pointer, so the byte
+    /// the negative sign check would read at address zero is 0x2D.
+    function externalTestZeroStringStartPointerScratchSign(uint256 end) external pure {
+        assembly ("memory-safe") {
+            mstore8(0, 0x2D)
+        }
+        LibParseDecimal.unsafeDecimalStringToSignedInt(0, end);
+    }
+
+    /// Test that a zero start pointer reverts even when the byte at memory
+    /// address zero is the negative sign character. The internal library call
+    /// shares the external helper's memory, so the scratch write is visible
+    /// to the conversion.
+    function testExternalTestZeroStringStartPointerScratchSign(uint256 end) external {
+        end = bound(end, 1, type(uint16).max);
+        vm.expectRevert(abi.encodeWithSelector(ZeroStringStartPointer.selector));
+        this.externalTestZeroStringStartPointerScratchSign(end);
+    }
+
+    /// Test that an empty region starting at pointer zero is reported as an
+    /// empty decimal string rather than a zero start pointer, even when the
+    /// byte at memory address zero is the negative sign character. This
+    /// matches `unsafeDecimalStringToInt`, which checks emptiness first.
+    function testUnsafeStrToSignedIntZeroStartEmpty() external pure {
+        assembly ("memory-safe") {
+            mstore8(0, 0x2D)
+        }
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(0, 0);
+        assertEq(errorSelector, ParseEmptyDecimalString.selector);
+        assertEq(result, 0);
+    }
+
     /// Test that when start is greater than or equal to end, the signed
     /// conversion returns the empty string error selector and a zero value.
     /// The negative sign check reads memory at start, so start is bound to
