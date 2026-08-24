@@ -47,9 +47,9 @@ library LibParseDecimal {
             // Anything under 10^77 is safe to raise to its power of 10 without
             // overflowing a uint256.
             while (cursor >= start && exponent < 77) {
-                // We don't need to check the bounds of the byte because
-                // we know it is a decimal literal as long as the bounds
-                // are correct (calculated in `boundLiteral`).
+                // The byte is not checked to be a decimal digit;
+                // ensuring the region contains only decimal characters
+                // is the caller's responsibility.
                 assembly ("memory-safe") {
                     value := add(value, mul(sub(byte(0, mload(cursor)), digitOffset), exp(10, exponent)))
                 }
