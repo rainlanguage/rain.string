@@ -640,8 +640,13 @@ uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 
 /// @dev Rainlang literal hexadecimal dispatch is 0x
 /// We compare the head and dispatch together to avoid a second comparison.
-/// This is safe because the head is prefiltered to be 0-9 due to the numeric
-/// literal head, therefore the only possible match is 0x (not x0).
+/// This is safe only when the combined pair mask is compared for EQUALITY
+/// against this mask, with the head prefiltered by CMASK_NUMERIC_LITERAL_HEAD
+/// (0-9 and '-'): equality forces the two character bits to be exactly
+/// {'0', 'x'}, the prefilter excludes an 'x' head so "x0" cannot match, and a
+/// '-' head cannot match as '-' is neither '0' nor 'x'. A subset-membership
+/// comparison would false positive "00", whose single '0' bit is a strict
+/// subset of this mask.
 uint128 constant CMASK_LITERAL_HEX_DISPATCH = CMASK_ZERO | CMASK_LOWER_X;
 
 /// @dev We may want to match the exact start of a hex literal.
