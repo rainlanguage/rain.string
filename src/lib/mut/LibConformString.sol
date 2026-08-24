@@ -117,12 +117,15 @@ library LibConformString {
         bytes(str)[index] = bytes1(uint8(char));
     }
 
-    /// Generates a single character from the given mask using the provided
-    /// seed. This is useful for generating random characters that conform to a
-    /// specific character set.
-    /// @param seed The seed to use for generating the character.
+    /// Deterministically produces a single character that is in the given
+    /// mask. The probe starts at character 0 and only consults the seed after
+    /// a miss, so the result is not uniform over the mask, and a mask with
+    /// bit 0 set always produces "\x00" regardless of the seed. Useful in
+    /// tests wherever any deterministic conforming character is enough.
+    /// @param seed Selects among conforming characters when bit 0 of the mask
+    /// is unset. Ignored when bit 0 is set.
     /// @param mask The character mask to conform to.
-    /// @return The generated character.
+    /// @return The produced character. Always in the mask.
     function charFromMask(uint256 seed, uint256 mask) internal pure returns (bytes1) {
         if (mask == 0) {
             revert EmptyStringMask();
