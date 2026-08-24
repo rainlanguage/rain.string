@@ -23,6 +23,39 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         this.externalTestZeroStringStartPointer(end);
     }
 
+    /// Writes a negative sign byte into scratch space at address zero before
+    /// calling the signed conversion with a zero start pointer, so the byte
+    /// the negative sign check would read at address zero is 0x2D.
+    function externalTestZeroStringStartPointerScratchSign(uint256 end) external pure {
+        assembly ("memory-safe") {
+            mstore8(0, 0x2D)
+        }
+        LibParseDecimal.unsafeDecimalStringToSignedInt(0, end);
+    }
+
+    /// Test that a zero start pointer reverts even when the byte at memory
+    /// address zero is the negative sign character. The internal library call
+    /// shares the external helper's memory, so the scratch write is visible
+    /// to the conversion.
+    function testExternalTestZeroStringStartPointerScratchSign(uint256 end) external {
+        end = bound(end, 1, type(uint16).max);
+        vm.expectRevert(abi.encodeWithSelector(ZeroStringStartPointer.selector));
+        this.externalTestZeroStringStartPointerScratchSign(end);
+    }
+
+    /// Test that an empty region starting at pointer zero is reported as an
+    /// empty decimal string rather than a zero start pointer, even when the
+    /// byte at memory address zero is the negative sign character. This
+    /// matches `unsafeDecimalStringToInt`, which checks emptiness first.
+    function testUnsafeStrToSignedIntZeroStartEmpty() external pure {
+        assembly ("memory-safe") {
+            mstore8(0, 0x2D)
+        }
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(0, 0);
+        assertEq(errorSelector, ParseEmptyDecimalString.selector);
+        assertEq(result, 0);
+    }
+
     /// Test that when start is greater than or equal to end, the signed
     /// conversion returns the empty string error selector and a zero value.
     /// The negative sign check reads memory at start, so start is bound to
@@ -65,21 +98,37 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
     }
 
     /// Test the exact overflow boundaries: int256 max + 1 overflows the
-    /// positive case and 2^255 + 1 overflows the negative case.
+    /// positive case and 2^255 + 1 overflows the negative case. Both return
+    /// a zero value beside the selector.
     function testUnsafeStrToSignedIntBoundaryOverflow() external pure {
         // int256 max + 1 == 2^255.
         string memory input = "57896044618658097711785492504343953926634992332820282019728792003956564819968";
-        (bytes4 errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
         assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
 
         // -(2^255 + 1).
         input = "-57896044618658097711785492504343953926634992332820282019728792003956564819969";
-        (errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (errorSelector, result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
         assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
+    }
+
+    /// Test that garbage input reaching the negative overflow path returns a
+    /// zero value beside the selector. A double negative sign leaves the inner
+    /// unsigned parse reading the second sign as a digit, which lands in the
+    /// negative overflow branch.
+    function testUnsafeStrToSignedIntGarbageOverflowZeroValue() external pure {
+        string memory input = "--5";
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+            Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
+        );
+        assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
     }
 
     function checkUnsafeStrToSignedInt(string memory input, int256 expected) internal pure {
@@ -146,10 +195,11 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
         string memory input = string(abi.encodePacked(leadingZeros, str));
 
-        (bytes4 errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
         assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
     }
 
     /// Test negative overflow.
@@ -164,9 +214,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
         string memory input = string(abi.encodePacked("-", leadingZeros, str));
 
-        (bytes4 errorSelector,) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
         );
         assertEq(errorSelector, ParseDecimalOverflow.selector);
+        assertEq(result, 0);
     }
 }

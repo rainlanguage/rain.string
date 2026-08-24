@@ -309,11 +309,32 @@ contract LibConformStringTest is Test {
         this.externalCorruptSingleChar(s, index);
     }
 
-    /// The character search starts at 0, so any mask with the null bit set
-    /// yields the null character for every seed.
-    function testCharFromMaskBitZero(uint256 seed, uint256 mask) external pure {
-        mask |= 1;
-        assertEq(uint8(LibConformString.charFromMask(seed, mask)), 0);
+    /// A mask with bit 0 set does not swallow the seed: the seed selects
+    /// among the conforming characters.
+    function testCharFromMaskBitZeroSeedSelects() external pure {
+        uint256 mask = 1 | (1 << 0x41);
+        assertEq(uint8(LibConformString.charFromMask(0, mask)), 0);
+        assertEq(uint8(LibConformString.charFromMask(0x41, mask)), 0x41);
+    }
+
+    /// The first candidate is the low byte of the seed, so any seed whose low
+    /// byte is in the mask selects it directly: every set bit of the mask is
+    /// selected by at least one seed, including bit 0.
+    function testCharFromMaskLowByteSelected(uint256 seed, uint256 mask) external pure {
+        uint256 char = seed & 0xFF;
+        // forge-lint: disable-next-line(incorrect-shift)
+        mask |= 1 << char;
+        assertEq(uint8(LibConformString.charFromMask(seed, mask)), char);
+    }
+
+    /// When the low byte of the seed misses the mask, candidates reroll by
+    /// hashing the candidate with the full seed, so seeds sharing a low byte
+    /// still select independently. 0x01 is not a hex digit character, so both
+    /// walks reroll. Expected values come from a keccak walk computed with
+    /// cast, outside the implementation.
+    function testCharFromMaskRerollUsesFullSeed() external pure {
+        assertEq(uint8(LibConformString.charFromMask(0x01, uint256(CMASK_HEX))), uint8(bytes1("d")));
+        assertEq(uint8(LibConformString.charFromMask(0x0101, uint256(CMASK_HEX))), uint8(bytes1("2")));
     }
 
     /// charFromMask is deterministic in (seed, mask) regardless of surrounding
