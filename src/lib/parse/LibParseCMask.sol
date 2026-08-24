@@ -4,9 +4,11 @@ pragma solidity ^0.8.25;
 
 // Every CMASK_* constant in this file is a mask over 7-bit ASCII only: bit N
 // of the uint128 is set iff byte N (0x00-0x7F) is in the set. Bytes 0x80-0xFF
-// are never in any mask, even though consumers accept masks as uint256 and
-// index them by a full byte value; the high 128 bits of a widened mask are
-// always zero.
+// are never in any uint128 mask, even though consumers accept masks as
+// uint256 and index them by a full byte value; the high 128 bits of a widened
+// mask are always zero. The sole exception is CMASK_NOT_IDENTIFIER_TAIL,
+// which is uint256 by necessity: it is a complement, and the complement of a
+// 7-bit ASCII set includes bytes 0x80-0xFF, which uint128 cannot express.
 
 /// @dev Workaround for https://github.com/foundry-rs/foundry/issues/6572
 contract LibParseCMask {}
@@ -596,11 +598,10 @@ uint128 constant CMASK_OPERAND_START = CMASK_LESS_THAN_SIGN;
 /// @dev Rainlang operand end is >
 uint128 constant CMASK_OPERAND_END = CMASK_GREATER_THAN_SIGN;
 
-/// @dev Complement of CMASK_IDENTIFIER_TAIL within the 128-bit mask domain:
-/// every 7-bit ASCII char that is not lower alphanumeric kebab. Bytes
-/// 0x80-0xFF are in neither this mask nor CMASK_IDENTIFIER_TAIL, so the two
-/// masks do not partition the full byte domain.
-uint128 constant CMASK_NOT_IDENTIFIER_TAIL = ~CMASK_IDENTIFIER_TAIL;
+/// @dev Complement of CMASK_IDENTIFIER_TAIL over the full byte domain: every
+/// byte that is not lower alphanumeric kebab, including 0x80-0xFF. The union
+/// with CMASK_IDENTIFIER_TAIL covers the whole byte domain.
+uint256 constant CMASK_NOT_IDENTIFIER_TAIL = ~uint256(CMASK_IDENTIFIER_TAIL);
 
 /// @dev Rainlang whitespace is \n \r \t space
 uint128 constant CMASK_WHITESPACE = CMASK_LINE_FEED | CMASK_CARRIAGE_RETURN | CMASK_HORIZONTAL_TAB | CMASK_SPACE;
