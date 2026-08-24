@@ -111,6 +111,19 @@ library LibParseDecimal {
     /// @return The signed integer representation of the ASCII string.
     function unsafeDecimalStringToSignedInt(uint256 start, uint256 end) internal pure returns (bytes4, int256) {
         unchecked {
+            // Empty regions are reported before the zero start pointer check,
+            // matching `unsafeDecimalStringToInt`.
+            if (start >= end) {
+                return (ParseEmptyDecimalString.selector, 0);
+            }
+
+            // A zero start pointer is rejected before the negative sign check
+            // reads the byte at `start`, so the rejection cannot be bypassed
+            // by scratch memory happening to hold a negative sign character.
+            if (start == 0) {
+                revert ZeroStringStartPointer();
+            }
+
             uint256 cursor = start;
             uint256 isNeg = LibParseChar.isMask(cursor, end, CMASK_NEGATIVE_SIGN);
             cursor += isNeg;
