@@ -65,9 +65,13 @@ library LibConformString {
         }
     }
 
-    /// Overload that assumes ASCII range.
+    /// Overload that generates replacement characters in the ASCII range.
+    /// Characters whose bit is already set in the mask are kept as-is,
+    /// including characters at or above 0x80, so the result is only
+    /// guaranteed to be all-ASCII when the mask has no bits set at or above
+    /// 0x80.
     function conformStringToMask(string memory str, uint256 mask) internal pure {
-        // Assume that we want to restrict to ASCII range.
+        // 0x80 bounds generated characters to the ASCII range.
         conformStringToMask(str, mask, 0x80);
     }
 
