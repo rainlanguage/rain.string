@@ -98,8 +98,7 @@ library LibConformString {
     /// and is not a double quote. This is primarily useful for testing
     /// purposes, e.g., to test that a parser correctly rejects invalid input.
     /// A character that is already invalid and not a double quote is kept
-    /// as-is; any other character is replaced with a random such byte value
-    /// in a rather inefficient way.
+    /// as-is; any other character is replaced with a random such byte value.
     /// @param str The string to corrupt. This string is mutated in place.
     /// @param index The index of the character to corrupt.
     function corruptSingleChar(string memory str, uint256 index) internal pure {
