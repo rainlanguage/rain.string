@@ -644,8 +644,10 @@ uint256 constant COMMENT_START_SEQUENCE = uint256(uint16(bytes2("/*")));
 // forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant COMMENT_END_SEQUENCE = uint256(uint16(bytes2("*/")));
 
-/// @dev Rainlang comment end sequence end byte is / */
-uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
+/// @dev Rainlang comment end sequence end byte is / i.e. the last byte of */
+/// This is a byte VALUE (0x2F), not a char mask; compare it directly against
+/// a single byte.
+uint256 constant COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 
 /// @dev Rainlang literal hexadecimal dispatch is 0x
 /// We compare the head and dispatch together to avoid a second comparison.
@@ -653,6 +655,8 @@ uint256 constant CMASK_COMMENT_END_SEQUENCE_END = COMMENT_END_SEQUENCE & 0xFF;
 /// literal head, therefore the only possible match is 0x (not x0).
 uint128 constant CMASK_LITERAL_HEX_DISPATCH = CMASK_ZERO | CMASK_LOWER_X;
 
-/// @dev We may want to match the exact start of a hex literal.
+/// @dev The exact 2-byte sequence 0x i.e. 0x3078 that starts a hex literal.
+/// This is a byte-sequence VALUE, not a char mask; compare it directly
+/// against a 2-byte value.
 // forge-lint: disable-next-line(unsafe-typecast)
-uint256 constant CMASK_LITERAL_HEX_DISPATCH_START = uint256(uint16(bytes2("0x")));
+uint256 constant LITERAL_HEX_DISPATCH_START_SEQUENCE = uint256(uint16(bytes2("0x")));
