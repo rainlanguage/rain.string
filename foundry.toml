@@ -1,7 +1,3 @@
-[package]
-name = "rain-string"
-version = "0.2.1"
-
 [profile.default]
 libs = ["dependencies"]
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
