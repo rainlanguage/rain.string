@@ -1,0 +1,39 @@
+[
+  {
+    "timestamp": "2026-08-24T08:55:39Z",
+    "commit": "35496d89eb7442735f101e3ac4584259b2920a21",
+    "publishedTag": "v0.2.0",
+    "commitsAheadOfTag": 10,
+    "scope": "whole repo",
+    "tool": "adversarial-mutation-test",
+    "skillVersion": "0.33.0",
+    "summary": {
+      "units": 5,
+      "mutants": 266,
+      "killed": 261,
+      "survived": 5,
+      "survivedNote": "all 5 classified spec-equivalent with reasoning (LibConformString parameter/seed mutants that preserve conformance, termination and determinism)",
+      "testsBefore": 20,
+      "testsAfter": 54,
+      "filed": [
+        "#38",
+        "#39",
+        "#40",
+        "#41",
+        "#42",
+        "#43",
+        "#44",
+        "#45",
+        "#46",
+        "#47",
+        "#48",
+        "#49",
+        "#50",
+        "#51",
+        "#52",
+        "#53"
+      ],
+      "coveragePrs": ["#34", "#35", "#36", "#37"]
+    }
+  }
+]
