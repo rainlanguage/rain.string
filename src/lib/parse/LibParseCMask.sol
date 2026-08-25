@@ -5,7 +5,8 @@ pragma solidity ^0.8.25;
 // Every CMASK_* constant in this file is a uint256 mask over the full byte
 // domain: bit N is set iff byte N (0x00-0xFF) is in the set. Every mask
 // contains 7-bit ASCII bytes only, so bits 0x80-0xFF are unset, except
-// CMASK_NOT_IDENTIFIER_TAIL, whose complement includes bytes 0x80-0xFF.
+// CMASK_NOT_IDENTIFIER_TAIL, which is the complement of CMASK_IDENTIFIER_TAIL
+// and therefore has bits 0x80-0xFF set.
 
 /// @dev ASCII null
 // forge-lint: disable-next-line(unsafe-typecast)
@@ -610,11 +611,17 @@ uint256 constant CMASK_LHS_STACK_HEAD = CMASK_LOWER_ALPHA_A_Z | CMASK_UNDERSCORE
 
 /// @dev Rainlang identifier head is lower alpha a-z
 uint256 constant CMASK_IDENTIFIER_HEAD = CMASK_LOWER_ALPHA_A_Z;
+
+/// @dev Rainlang RHS word head is the identifier head.
 uint256 constant CMASK_RHS_WORD_HEAD = CMASK_IDENTIFIER_HEAD;
 
 /// @dev Rainlang stack/identifier tail is lower alphanumeric kebab a-z 0-9 -
 uint256 constant CMASK_IDENTIFIER_TAIL = CMASK_IDENTIFIER_HEAD | CMASK_NUMERIC_0_9 | CMASK_DASH;
+
+/// @dev Rainlang LHS stack tail is the identifier tail.
 uint256 constant CMASK_LHS_STACK_TAIL = CMASK_IDENTIFIER_TAIL;
+
+/// @dev Rainlang RHS word tail is the identifier tail.
 uint256 constant CMASK_RHS_WORD_TAIL = CMASK_IDENTIFIER_TAIL;
 
 /// @dev Rainlang operand start is <

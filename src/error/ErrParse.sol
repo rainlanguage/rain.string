@@ -13,7 +13,9 @@ pragma solidity ^0.8.25;
 /// Supplied by the reverting caller, not by `LibParseDecimal`.
 error ParseEmptyDecimalString(uint256 position);
 
-/// The decimal string is too large to fit in a `uint256`.
+/// The decimal string is too large to fit the target integer type: a
+/// `uint256` for the unsigned conversion, or the `int256` range (offset by
+/// one for negative values) for the signed conversion.
 /// `LibParseDecimal` never abi-encodes a position; it returns this error's
 /// bare 4-byte selector to its caller instead of reverting. The `position`
 /// parameter is the contract for downstream reverters: a caller that reverts

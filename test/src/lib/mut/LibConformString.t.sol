@@ -6,6 +6,7 @@ import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {stdError} from "forge-std-1.16.2/src/StdError.sol";
 
 import {LibConformString} from "../../../../src/lib/mut/LibConformString.sol";
+import {LibConformStringSlow} from "../../../lib/mut/LibConformStringSlow.sol";
 import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
 import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../../../../src/lib/parse/LibParseCMask.sol";
 import {EmptyStringMask} from "../../../../src/error/ErrConform.sol";
@@ -132,6 +133,129 @@ contract LibConformStringTest is Test {
         string memory s = "a";
         LibConformString.conformStringToMask(s, CMASK_WHITESPACE);
         assertEq(uint8(bytes(s)[0]), 0x0D);
+    }
+
+    /// Walks every bit length 2-256 through the branchless derivation. A
+    /// single-bit mask can only terminate once the derived bound exceeds the
+    /// bit's index, so a bound too small to reach the mask's top bit fails
+    /// this leg by running out of gas. A low bit beside the high bit makes
+    /// the reroll modulus observable, so a bound differing from the spec
+    /// reference's bit length changes the exact walk and fails that leg.
+    function testConformStringBitLengthLadder() external pure {
+        for (uint256 n = 1; n < 256; n++) {
+            string memory s = new string(2);
+            // forge-lint: disable-next-line(incorrect-shift)
+            LibConformString.conformStringToMask(s, 1 << n);
+            // forge-lint: disable-next-line(unsafe-typecast)
+            assertEq(uint8(bytes(s)[0]), uint8(n));
+            // forge-lint: disable-next-line(unsafe-typecast)
+            assertEq(uint8(bytes(s)[1]), uint8(n));
+
+            // forge-lint: disable-next-line(incorrect-shift)
+            uint256 mask = (1 << n) | 1;
+            string memory a = "aa";
+            string memory b = "aa";
+            LibConformString.conformStringToMask(a, mask);
+            LibConformStringSlow.conformSlow(b, mask);
+            assertEq(a, b);
+        }
+    }
+
+    /// Conforms "aaaaaaaa" to the mask (1 << n) | 1 and asserts the exact
+    /// conformed bytes. Expected values come from keccak walks computed with
+    /// cast, outside the implementation: every byte rerolls, each candidate
+    /// being the top byte of keccak256(abi.encode(char, seed)) modulo the
+    /// mask's bit length n + 1, with the seed evolving across rerolls and
+    /// characters, until a candidate lands on bit 0 or bit n. Every conformed
+    /// byte is therefore 0x00 or n, and which of the two each position lands
+    /// on is a function of the derived bound, so the pinned bytes are
+    /// sensitive to the exact bit length at the chosen n.
+    function checkBoundaryWalk(uint256 n, bytes memory expected) internal pure {
+        string memory s = "aaaaaaaa";
+        // forge-lint: disable-next-line(incorrect-shift)
+        LibConformString.conformStringToMask(s, (1 << n) | 1);
+        assertEq(bytes(s), expected);
+    }
+
+    /// Top bit exactly at the final shr(1) step's threshold.
+    function testConformStringBoundaryWalk1() external pure {
+        checkBoundaryWalk(1, hex"0101010000010101");
+    }
+
+    /// Top bit exactly at the shr(2) step's threshold.
+    function testConformStringBoundaryWalk2() external pure {
+        checkBoundaryWalk(2, hex"0002000202020002");
+    }
+
+    /// Top bit one below the shr(4) step's threshold, in the upper half of
+    /// the shr(2) step's window.
+    function testConformStringBoundaryWalk3() external pure {
+        checkBoundaryWalk(3, hex"0303030003000000");
+    }
+
+    /// Top bit exactly at the shr(4) step's threshold.
+    function testConformStringBoundaryWalk4() external pure {
+        checkBoundaryWalk(4, hex"0004000004040000");
+    }
+
+    /// Top bit one below the shr(8) step's threshold, in the upper half of
+    /// the shr(4) step's window.
+    function testConformStringBoundaryWalk7() external pure {
+        checkBoundaryWalk(7, hex"0007000700070000");
+    }
+
+    /// Top bit exactly at the shr(8) step's threshold.
+    function testConformStringBoundaryWalk8() external pure {
+        checkBoundaryWalk(8, hex"0808080808000808");
+    }
+
+    /// Top bit one below the shr(16) step's threshold, in the upper half of
+    /// the shr(8) step's window.
+    function testConformStringBoundaryWalk15() external pure {
+        checkBoundaryWalk(15, hex"0f0f00000f000f0f");
+    }
+
+    /// Top bit exactly at the shr(16) step's threshold.
+    function testConformStringBoundaryWalk16() external pure {
+        checkBoundaryWalk(16, hex"0000000010100000");
+    }
+
+    /// Top bit one below the shr(32) step's threshold, in the upper half of
+    /// the shr(16) step's window.
+    function testConformStringBoundaryWalk31() external pure {
+        checkBoundaryWalk(31, hex"001f001f1f1f1f00");
+    }
+
+    /// Top bit exactly at the shr(32) step's threshold.
+    function testConformStringBoundaryWalk32() external pure {
+        checkBoundaryWalk(32, hex"0020000020002000");
+    }
+
+    /// Top bit one below the shr(64) step's threshold, in the upper half of
+    /// the shr(32) step's window.
+    function testConformStringBoundaryWalk63() external pure {
+        checkBoundaryWalk(63, hex"003f3f3f00003f3f");
+    }
+
+    /// Top bit exactly at the shr(64) step's threshold.
+    function testConformStringBoundaryWalk64() external pure {
+        checkBoundaryWalk(64, hex"4040000040400040");
+    }
+
+    /// Top bit one below the shr(128) step's threshold, in the upper half of
+    /// the shr(64) step's window.
+    function testConformStringBoundaryWalk127() external pure {
+        checkBoundaryWalk(127, hex"7f7f7f7f7f7f007f");
+    }
+
+    /// Top bit exactly at the shr(128) step's threshold.
+    function testConformStringBoundaryWalk128() external pure {
+        checkBoundaryWalk(128, hex"8000000000808080");
+    }
+
+    /// Top bit in the upper half of the shr(128) step's window.
+    function testConformStringBoundaryWalk255() external pure {
+        checkBoundaryWalk(255, hex"000000ff0000ff00");
     }
 
     /// conformStringToAscii rewrites every non-ASCII byte to an ASCII one and
