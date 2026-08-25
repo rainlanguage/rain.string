@@ -44,6 +44,7 @@ contract LibParseCharSkipMaskTest is Test {
         }
         uint256 cursor = Pointer.unwrap(s.dataPointer());
         uint256 end = cursor + 32;
+        // forge-lint: disable-next-line(incorrect-shift,unsafe-typecast)
         assertEq(LibParseChar.skipMask(cursor, end, 1 << uint256(uint8(bytes1("a")))), end);
     }
 
