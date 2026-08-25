@@ -10,7 +10,7 @@ import {LibBytes} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseCharSlow} from "test/lib/parse/LibParseCharSlow.sol";
 
 /// @title LibParseCharSkipMaskTest
-/// @notice Tests that the isMask function works correctly.
+/// @notice Tests that the skipMask function works correctly.
 contract LibParseCharSkipMaskTest is Test {
     using LibBytes for bytes;
 
