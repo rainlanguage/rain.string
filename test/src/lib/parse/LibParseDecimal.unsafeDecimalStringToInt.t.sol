@@ -7,7 +7,7 @@ import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
 import {LibParseDecimalSlow} from "test/lib/parse/LibParseDecimalSlow.sol";
-import {LibTestString} from "test/lib/LibTestString.sol";
+import {LibTestString} from "../../../lib/LibTestString.sol";
 import {
     ParseEmptyDecimalString,
     ParseDecimalOverflow,
