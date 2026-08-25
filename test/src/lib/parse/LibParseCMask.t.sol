@@ -188,6 +188,7 @@ contract LibParseCMaskTest is Test {
     /// inclusive range [lo, hi].
     function rangeMask(uint256 lo, uint256 hi) internal pure returns (uint256 mask) {
         for (uint256 i = lo; i <= hi; i++) {
+            // forge-lint: disable-next-line(incorrect-shift)
             mask |= 1 << i;
         }
     }
@@ -413,6 +414,7 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_IDENTIFIER_TAIL | CMASK_NOT_IDENTIFIER_TAIL, type(uint256).max);
         assertEq(CMASK_IDENTIFIER_TAIL & CMASK_NOT_IDENTIFIER_TAIL, 0);
         for (uint256 c = 0x80; c <= 0xFF; c++) {
+            // forge-lint: disable-next-line(incorrect-shift)
             assertEq((1 << c) & CMASK_NOT_IDENTIFIER_TAIL, 1 << c);
         }
     }
