@@ -83,7 +83,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
             bytes(leadingZeros)[i] = "0";
         }
 
-        string memory input = string(abi.encodePacked(strHigh, strLow));
+        string memory input = string(abi.encodePacked(leadingZeros, strHigh, strLow));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())
