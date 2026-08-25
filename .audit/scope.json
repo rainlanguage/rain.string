@@ -1,0 +1,32 @@
+{
+  "auditedAt": "2026-08-24T19:27:19Z",
+  "auditedCommit": "3e76babafe89e6dd0efa17caedb298f60b9e3789",
+  "files": [
+    "src/error/ErrConform.sol",
+    "src/error/ErrParse.sol",
+    "src/lib/mut/LibConformString.sol",
+    "src/lib/parse/LibParseChar.sol",
+    "src/lib/parse/LibParseCMask.sol",
+    "src/lib/parse/LibParseDecimal.sol",
+    "test/lib/parse/LibParseCharSlow.sol",
+    "test/lib/parse/LibParseDecimalSlow.sol",
+    "test/src/lib/mut/LibConformString.t.sol",
+    "test/src/lib/parse/LibParseChar.isMask.t.sol",
+    "test/src/lib/parse/LibParseChar.skipMask.t.sol",
+    "test/src/lib/parse/LibParseCMask.t.sol",
+    "test/src/lib/parse/LibParseDecimal.unsafeDecimalStringToInt.t.sol",
+    "test/src/lib/parse/LibParseDecimal.unsafeDecimalStringToSignedInt.t.sol",
+    "README.md",
+    ".github/workflows/package-release.yaml",
+    ".github/workflows/rainix.yaml",
+    "foundry.toml",
+    "flake.nix",
+    "remappings.txt",
+    "slither.config.json",
+    "REUSE.toml",
+    "soldeer.lock",
+    ".gas-snapshot",
+    ".gitignore"
+  ],
+  "countsByLanguage": { "solidity": 14 }
+}
