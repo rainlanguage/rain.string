@@ -7,9 +7,6 @@ pragma solidity ^0.8.25;
 // contains 7-bit ASCII bytes only, so bits 0x80-0xFF are unset, except
 // CMASK_NOT_IDENTIFIER_TAIL, whose complement includes bytes 0x80-0xFF.
 
-/// @dev Workaround for https://github.com/foundry-rs/foundry/issues/6572
-contract LibParseCMask {}
-
 /// @dev ASCII null
 // forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant CMASK_NULL = uint256(1) << uint256(uint8(bytes1("\x00")));
