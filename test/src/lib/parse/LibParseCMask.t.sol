@@ -171,8 +171,8 @@ import {
     COMMENT_END_SEQUENCE_END,
     CMASK_LITERAL_HEX_DISPATCH,
     LITERAL_HEX_DISPATCH_START_SEQUENCE
-} from "src/lib/parse/LibParseCMask.sol";
-import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
+} from "../../../../src/lib/parse/LibParseCMask.sol";
+import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
 import {Pointer} from "rain-solmem-0.1.26/src/lib/LibPointer.sol";
 import {LibBytes} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 
