@@ -64,11 +64,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
     /// Test that when start is greater than or equal to end, the signed
     /// conversion returns the empty string error selector and a zero value.
-    /// The negative sign check reads memory at start, so start is bound to
-    /// pointers that can be read without excessive memory expansion.
+    /// The empty check returns before the negative sign check, so no memory
+    /// is read and the full pointer domain is safe to fuzz.
     function testUnsafeStrToSignedIntEmpty(uint256 start, uint256 end) external pure {
-        end = bound(end, 0, type(uint16).max);
-        start = bound(start, end, type(uint16).max);
+        start = bound(start, end, type(uint256).max);
         (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(start, end);
         assertEq(errorSelector, ParseEmptyDecimalString.selector);
         assertEq(result, 0);
