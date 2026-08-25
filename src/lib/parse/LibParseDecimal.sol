@@ -128,6 +128,8 @@ library LibParseDecimal {
     /// it is checked to be a decimal character `0`-`9` by the unsigned
     /// conversion, so any other byte anywhere in the region yields
     /// `ParseInvalidDecimalChar`.
+    /// A region holding only a negative sign has no digits after the sign, so
+    /// it reports `ParseEmptyDecimalString`.
     /// DOES check for signed integer overflow.
     /// `unsafe` refers to the pointers: `start` and `end` are read as raw
     /// memory addresses with no bounds or ownership checks, so the caller is
