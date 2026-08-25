@@ -25,6 +25,8 @@ library LibParseDecimal {
     /// `unsafe` refers to the pointers: `start` and `end` are read as raw
     /// memory addresses with no bounds or ownership checks, so the caller is
     /// responsible for them delimiting a readable region.
+    /// Reverts with `ZeroStringStartPointer` when `start` is zero; this is the
+    /// only failure that reverts instead of returning a selector.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
@@ -137,6 +139,8 @@ library LibParseDecimal {
     /// `unsafe` refers to the pointers: `start` and `end` are read as raw
     /// memory addresses with no bounds or ownership checks, so the caller is
     /// responsible for them delimiting a readable region.
+    /// Reverts with `ZeroStringStartPointer` when `start` is zero; this is the
+    /// only failure that reverts instead of returning a selector.
     /// @param start The start of the memory region containing the decimal ASCII
     /// string.
     /// @param end The end of the memory region containing the decimal ASCII
