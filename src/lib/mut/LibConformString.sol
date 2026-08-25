@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.18;
 
-import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../parse/LibParseCMask.sol";
+import {CMASK_ASCII, CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../parse/LibParseCMask.sol";
 import {EmptyStringMask} from "../../error/ErrConform.sol";
 
 /// @title LibConformString
@@ -89,7 +89,7 @@ library LibConformString {
 
     /// Conforms the string to the full ASCII character set.
     function conformStringToAscii(string memory str) internal pure {
-        conformStringToMask(str, type(uint128).max);
+        conformStringToMask(str, CMASK_ASCII);
     }
 
     /// Conforms the string to ASCII hex digit characters.
