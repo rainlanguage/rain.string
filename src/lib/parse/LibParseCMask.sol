@@ -610,11 +610,17 @@ uint256 constant CMASK_LHS_STACK_HEAD = CMASK_LOWER_ALPHA_A_Z | CMASK_UNDERSCORE
 
 /// @dev Rainlang identifier head is lower alpha a-z
 uint256 constant CMASK_IDENTIFIER_HEAD = CMASK_LOWER_ALPHA_A_Z;
+
+/// @dev Rainlang RHS word head is the identifier head.
 uint256 constant CMASK_RHS_WORD_HEAD = CMASK_IDENTIFIER_HEAD;
 
 /// @dev Rainlang stack/identifier tail is lower alphanumeric kebab a-z 0-9 -
 uint256 constant CMASK_IDENTIFIER_TAIL = CMASK_IDENTIFIER_HEAD | CMASK_NUMERIC_0_9 | CMASK_DASH;
+
+/// @dev Rainlang LHS stack tail is the identifier tail.
 uint256 constant CMASK_LHS_STACK_TAIL = CMASK_IDENTIFIER_TAIL;
+
+/// @dev Rainlang RHS word tail is the identifier tail.
 uint256 constant CMASK_RHS_WORD_TAIL = CMASK_IDENTIFIER_TAIL;
 
 /// @dev Rainlang operand start is <
