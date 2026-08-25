@@ -133,6 +133,7 @@ import {
     CMASK_RIGHT_CURLY_BRACKET,
     CMASK_TILDE,
     CMASK_DELETE,
+    CMASK_ASCII,
     CMASK_PRINTABLE,
     CMASK_NUMERIC_0_9,
     CMASK_E_NOTATION,
@@ -344,6 +345,12 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_LOWER_ALPHA_A_F, rangeMask(0x61, 0x66));
         assertEq(CMASK_UPPER_ALPHA_A_F, rangeMask(0x41, 0x46));
         assertEq(CMASK_HEX, rangeMask(0x30, 0x39) | rangeMask(0x61, 0x66) | rangeMask(0x41, 0x46));
+    }
+
+    /// The ASCII domain is every 7-bit byte 0x00-0x7F: the low 128 bits set
+    /// and no bit at or above 0x80.
+    function testCMaskAscii() external pure {
+        assertEq(CMASK_ASCII, rangeMask(0x00, 0x7F));
     }
 
     /// Printable ASCII is space up to tilde: DEL 0x7F is excluded and no bit
