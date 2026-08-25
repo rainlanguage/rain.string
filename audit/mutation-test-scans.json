@@ -4,6 +4,7 @@
     "commit": "35496d89eb7442735f101e3ac4584259b2920a21",
     "publishedTag": "v0.2.0",
     "commitsAheadOfTag": 10,
+    "anchorNote": "v0.2.0 was the newest published tag when this scan ran; publishing moved to the per-language sol-v*/next-v* tag namespaces later on 2026-08-24, so entries after this one anchor publishedTag and commitsAheadOfTag to the newest sol-v* tag.",
     "scope": "whole repo",
     "tool": "adversarial-mutation-test",
     "skillVersion": "0.33.0",
