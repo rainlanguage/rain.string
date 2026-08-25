@@ -5,7 +5,8 @@ pragma solidity ^0.8.25;
 // Every CMASK_* constant in this file is a uint256 mask over the full byte
 // domain: bit N is set iff byte N (0x00-0xFF) is in the set. Every mask
 // contains 7-bit ASCII bytes only, so bits 0x80-0xFF are unset, except
-// CMASK_NOT_IDENTIFIER_TAIL, whose complement includes bytes 0x80-0xFF.
+// CMASK_NOT_IDENTIFIER_TAIL, which is the complement of CMASK_IDENTIFIER_TAIL
+// and therefore has bits 0x80-0xFF set.
 
 /// @dev Workaround for https://github.com/foundry-rs/foundry/issues/6572
 contract LibParseCMask {}
