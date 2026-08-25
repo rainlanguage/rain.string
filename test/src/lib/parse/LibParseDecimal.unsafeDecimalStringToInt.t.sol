@@ -15,7 +15,7 @@ import {
 } from "src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToInt
-/// @dev Test `TestLibParseDecimal.unsafeDecimalStringToInt`
+/// @dev Test `LibParseDecimal.unsafeDecimalStringToInt`
 contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
