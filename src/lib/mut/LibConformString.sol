@@ -88,22 +88,26 @@ library LibConformString {
     }
 
     /// Conforms the string to the full ASCII character set.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToAscii(string memory str) internal pure {
         conformStringToMask(str, type(uint128).max);
     }
 
     /// Conforms the string to ASCII hex digit characters.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToHexDigits(string memory str) internal pure {
         conformStringToMask(str, CMASK_HEX);
     }
 
     /// Conforms the string to printable characters that are valid string
     /// literal content.
+    /// @param str The string to conform. This string is mutated in place.
     function conformValidPrintableStringContent(string memory str) internal pure {
         conformStringToMask(str, CMASK_STRING_LITERAL_TAIL);
     }
 
     /// Conforms the string to whitespace characters.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToWhitespace(string memory str) internal pure {
         conformStringToMask(str, CMASK_WHITESPACE);
     }
