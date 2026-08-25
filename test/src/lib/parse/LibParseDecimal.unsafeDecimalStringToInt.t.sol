@@ -39,6 +39,16 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         assertEq(result, 0);
     }
 
+    /// An empty region starting at pointer zero is reported as an empty
+    /// decimal string rather than reverting as a zero start pointer: the
+    /// emptiness check runs first. The signed conversion pins the same
+    /// ordering.
+    function testUnsafeDecimalStrToIntZeroStartEmpty() external pure {
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(0, 0);
+        assertEq(errorSelector, ParseEmptyDecimalString.selector);
+        assertEq(result, 0);
+    }
+
     /// Test round tripping strings through the unsafeStrToInt function.
     function testUnsafeDecimalStrToIntRoundTrip(uint256 value, uint8 leadingZerosCount) external pure {
         string memory str = value.toString();
