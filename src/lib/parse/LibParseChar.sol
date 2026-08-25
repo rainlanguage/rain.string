@@ -2,6 +2,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
+/// @title LibParseChar
+/// @notice Branchless single-character membership tests against uint256
+/// character masks over raw memory cursors.
 library LibParseChar {
     /// Skip an unlimited number of chars until we find one that is not in the
     /// mask. If the cursor is at or past the end, the result is the cursor.
@@ -14,6 +17,8 @@ library LibParseChar {
     /// @param cursor The current position in the data.
     /// @param end The end of the data.
     /// @param mask The mask to check against.
+    /// @return The first position at or after `cursor` and at most `end` whose
+    /// char is not in the mask; `cursor` unchanged if already at or past `end`.
     function skipMask(uint256 cursor, uint256 end, uint256 mask) internal pure returns (uint256) {
         assembly ("memory-safe") {
             let inRange := lt(cursor, end)

@@ -6,6 +6,7 @@ import {Test} from "forge-std-1.16.1/src/Test.sol";
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
+import {LibParseDecimalSlow} from "test/lib/parse/LibParseDecimalSlow.sol";
 import {LibTestString} from "../../../lib/LibTestString.sol";
 import {
     ParseEmptyDecimalString,
@@ -64,11 +65,10 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
 
     /// Test that when start is greater than or equal to end, the signed
     /// conversion returns the empty string error selector and a zero value.
-    /// The negative sign check reads memory at start, so start is bound to
-    /// pointers that can be read without excessive memory expansion.
+    /// The empty check returns before the negative sign check, so no memory
+    /// is read and the full pointer domain is safe to fuzz.
     function testUnsafeStrToSignedIntEmpty(uint256 start, uint256 end) external pure {
-        end = bound(end, 0, type(uint16).max);
-        start = bound(start, end, type(uint16).max);
+        start = bound(start, end, type(uint256).max);
         (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(start, end);
         assertEq(errorSelector, ParseEmptyDecimalString.selector);
         assertEq(result, 0);
@@ -243,5 +243,71 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         );
         assertEq(errorSelector, ParseDecimalOverflow.selector);
         assertEq(result, 0);
+    }
+
+    function checkUnsafeStrToSignedIntAgainstReference(bytes memory data) internal pure {
+        (bytes4 slowSelector, int256 slowValue) = LibParseDecimalSlow.decimalStringToSignedIntSlow(data);
+        (bytes4 errorSelector, int256 result) = LibParseDecimal.unsafeDecimalStringToSignedInt(
+            Pointer.unwrap(data.dataPointer()), Pointer.unwrap(data.endDataPointer())
+        );
+        assertEq(errorSelector, slowSelector);
+        assertEq(result, slowValue);
+    }
+
+    /// Test that the signed conversion agrees with the naive reference
+    /// implementation on both the selector and the value for arbitrary bytes.
+    function testUnsafeStrToSignedIntReference(bytes memory data) external pure {
+        checkUnsafeStrToSignedIntAgainstReference(data);
+    }
+
+    /// Test that the signed conversion agrees with the naive reference
+    /// implementation on both the selector and the value for digit-dense
+    /// strings up to 100 digits, crossing the 77-character accumulation
+    /// window, with an optional leading `-` or `+` and one arbitrary byte
+    /// overwriting a digit at any position (or not at all when the overwrite
+    /// position lands past the end).
+    function testUnsafeStrToSignedIntReferenceLong(
+        uint256 seed,
+        uint256 length,
+        uint256 overwritePosition,
+        uint8 overwriteByte,
+        uint256 signMode
+    ) external pure {
+        length = bound(length, 1, 100);
+        bytes memory digits = new bytes(length);
+        for (uint256 i = 0; i < length; i++) {
+            // forge-lint: disable-next-line(unsafe-typecast)
+            digits[i] = bytes1(uint8(0x30 + uint256(keccak256(abi.encodePacked(seed, i))) % 10));
+        }
+        overwritePosition = bound(overwritePosition, 0, length);
+        if (overwritePosition < length) {
+            digits[overwritePosition] = bytes1(overwriteByte);
+        }
+
+        // 0 is unsigned, 1 is a leading negative sign, 2 is a leading `+`,
+        // which is not a sign and classifies as an invalid decimal character.
+        signMode = bound(signMode, 0, 2);
+        bytes memory data = digits;
+        if (signMode == 1) {
+            data = abi.encodePacked("-", digits);
+        } else if (signMode == 2) {
+            data = abi.encodePacked("+", digits);
+        }
+        checkUnsafeStrToSignedIntAgainstReference(data);
+    }
+
+    /// Test that the signed conversion agrees with the naive reference
+    /// implementation across a window of magnitudes straddling both signed
+    /// range boundaries, with and without a leading negative sign. The window
+    /// covers `type(int256).max` and its neighbors on the positive side and
+    /// `2^255` and its neighbors on the negative side, so an off-by-one on
+    /// either bound disagrees with the reference somewhere in the sweep.
+    function testUnsafeStrToSignedIntReferenceBoundary() external pure {
+        uint256 boundMagnitude = uint256(type(int256).max);
+        for (uint256 magnitude = boundMagnitude - 2; magnitude <= boundMagnitude + 3; magnitude++) {
+            string memory str = magnitude.toString();
+            checkUnsafeStrToSignedIntAgainstReference(bytes(str));
+            checkUnsafeStrToSignedIntAgainstReference(abi.encodePacked("-", str));
+        }
     }
 }
