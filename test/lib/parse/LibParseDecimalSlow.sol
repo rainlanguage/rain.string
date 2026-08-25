@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
-import {ParseDecimalOverflow, ParseEmptyDecimalString, ParseInvalidDecimalChar} from "src/error/ErrParse.sol";
+import {ParseDecimalOverflow, ParseEmptyDecimalString, ParseInvalidDecimalChar} from "../../../src/error/ErrParse.sol";
 
 /// @title LibParseDecimalSlow
 /// @notice Naive reference implementation of the decimal parsing contract,

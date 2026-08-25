@@ -5,11 +5,11 @@ pragma solidity =0.8.25;
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {stdError} from "forge-std-1.16.2/src/StdError.sol";
 
-import {LibConformString} from "src/lib/mut/LibConformString.sol";
-import {LibConformStringSlow} from "test/lib/mut/LibConformStringSlow.sol";
-import {LibParseChar} from "src/lib/parse/LibParseChar.sol";
-import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "src/lib/parse/LibParseCMask.sol";
-import {EmptyStringMask} from "src/error/ErrConform.sol";
+import {LibConformString} from "../../../../src/lib/mut/LibConformString.sol";
+import {LibConformStringSlow} from "../../../lib/mut/LibConformStringSlow.sol";
+import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
+import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../../../../src/lib/parse/LibParseCMask.sol";
+import {EmptyStringMask} from "../../../../src/error/ErrConform.sol";
 
 contract LibConformStringTest is Test {
     function externalConformStringToMask(string memory str, uint256 mask) external pure {
