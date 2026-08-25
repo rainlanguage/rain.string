@@ -11,6 +11,9 @@ import {
     ZeroStringStartPointer
 } from "../../error/ErrParse.sol";
 
+/// @title LibParseDecimal
+/// @notice Decimal ASCII to integer conversion over raw memory regions,
+/// reporting failures as bare error selectors instead of reverting.
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
     /// integer.

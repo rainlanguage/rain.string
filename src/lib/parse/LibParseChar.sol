@@ -2,6 +2,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.25;
 
+/// @title LibParseChar
+/// @notice Branchless single-character membership tests against uint256
+/// character masks over raw memory cursors.
 library LibParseChar {
     /// Skip an unlimited number of chars until we find one that is not in the
     /// mask. If the cursor is at or past the end, the result is the cursor.
