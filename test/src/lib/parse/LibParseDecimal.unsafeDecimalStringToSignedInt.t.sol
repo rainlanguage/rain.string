@@ -6,6 +6,7 @@ import {Test} from "forge-std-1.16.1/src/Test.sol";
 import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
+import {LibTestString} from "test/lib/LibTestString.sol";
 import {
     ParseEmptyDecimalString,
     ParseDecimalOverflow,
@@ -190,10 +191,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         value = bound(value, 0, uint256(type(int256).max) + (isNeg ? 1 : 0));
         string memory str = value.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked((isNeg ? "-" : ""), leadingZeros, str));
 
@@ -220,10 +218,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         value = bound(value, uint256(type(int256).max) + 1, type(uint256).max);
         string memory str = value.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked(leadingZeros, str));
 
@@ -239,10 +234,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToSignedInt is Test {
         value = bound(value, uint256(type(int256).max) + 2, type(uint256).max);
         string memory str = value.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked("-", leadingZeros, str));
 

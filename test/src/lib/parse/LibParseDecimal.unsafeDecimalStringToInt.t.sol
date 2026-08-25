@@ -7,6 +7,7 @@ import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "src/lib/parse/LibParseDecimal.sol";
 import {LibParseDecimalSlow} from "test/lib/parse/LibParseDecimalSlow.sol";
+import {LibTestString} from "test/lib/LibTestString.sol";
 import {
     ParseEmptyDecimalString,
     ParseDecimalOverflow,
@@ -43,10 +44,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     function testUnsafeDecimalStrToIntRoundTrip(uint256 value, uint8 leadingZerosCount) external pure {
         string memory str = value.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked(leadingZeros, str));
 
@@ -68,10 +66,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
         string memory strHigh = high.toString();
         string memory strLow = low.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked(strHigh, strLow));
 
@@ -88,10 +83,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     function testUnsafeDecimalStrToIntMax(uint8 leadingZerosCount) external pure {
         string memory str = type(uint256).max.toString();
 
-        string memory leadingZeros = new string(leadingZerosCount);
-        for (uint8 i = 0; i < leadingZerosCount; i++) {
-            bytes(leadingZeros)[i] = "0";
-        }
+        string memory leadingZeros = LibTestString.zeros(leadingZerosCount);
 
         string memory input = string(abi.encodePacked(leadingZeros, str));
 
@@ -122,10 +114,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// Test that a 78 digit string with a leading 1 parses when it fits in a
     /// uint256.
     function testUnsafeDecimalStrToIntTenPow77() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         string memory input = string(abi.encodePacked("1", zeros));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
@@ -138,10 +127,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
 
     /// Test that a 78 digit string with a leading 2 overflows.
     function testUnsafeDecimalStrToIntOverflowTwoTenPow77() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         string memory input = string(abi.encodePacked("2", zeros));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
@@ -156,10 +142,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// of the digit range, so this pins that the 78th-from-last byte check
     /// classifies `9` as an overflowing digit, not as an invalid character.
     function testUnsafeDecimalStrToIntOverflowNineTenPow77() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         string memory input = string(abi.encodePacked("9", zeros));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
@@ -176,10 +159,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// region classifies `9` as an overflowing digit, not as an invalid
     /// character.
     function testUnsafeDecimalStrToIntOverflowNonZeroBeyond78() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         string memory input = string(abi.encodePacked("101", zeros));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
@@ -283,10 +263,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`, including the
     /// boundary bytes immediately adjacent to the digit range.
     function testUnsafeDecimalStrToIntInvalidCharAt78th() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("a", zeros)));
         // 0x2F, one below the `0` byte.
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("/", zeros)));
@@ -298,10 +275,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// yields `ParseInvalidDecimalChar`, not `ParseDecimalOverflow`, including
     /// the boundary bytes immediately adjacent to the digit range.
     function testUnsafeDecimalStrToIntInvalidCharBeyond78() external pure {
-        string memory zeros = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros)[i] = "0";
-        }
+        string memory zeros = LibTestString.zeros(77);
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("a1", zeros)));
         // 0x2F, one below the `0` byte.
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("/1", zeros)));
@@ -313,14 +287,8 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     /// that would overflow a uint256, `ParseInvalidDecimalChar` wins
     /// regardless of their relative positions.
     function testUnsafeDecimalStrToIntInvalidCharWinsOverOverflow() external pure {
-        string memory zeros76 = new string(76);
-        for (uint256 i = 0; i < 76; i++) {
-            bytes(zeros76)[i] = "0";
-        }
-        string memory zeros77 = new string(77);
-        for (uint256 i = 0; i < 77; i++) {
-            bytes(zeros77)[i] = "0";
-        }
+        string memory zeros76 = LibTestString.zeros(76);
+        string memory zeros77 = LibTestString.zeros(77);
         // `5` at the 78th-from-last position would overflow; `a` sits inside
         // the last-77-character window.
         checkUnsafeStrToIntInvalid(string(abi.encodePacked("5a", zeros76)));
