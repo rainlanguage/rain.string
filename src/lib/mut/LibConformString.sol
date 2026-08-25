@@ -21,9 +21,9 @@ library LibConformString {
     /// [0, bit length of the mask), i.e. up to and including the mask's
     /// highest set bit, so the highest character in the mask is always
     /// generatable and the search always terminates.
-    /// This function uses a simple linear probing algorithm to find a valid
-    /// character. It is not the most efficient algorithm, but it is simple and
-    /// effective for this use case.
+    /// This function uses rejection sampling: candidates are rerolled from a
+    /// keccak stream until one lands in the mask. It is not the most efficient
+    /// algorithm, but it is simple and effective for this use case.
     /// @param str The string to conform. This string is mutated in place.
     /// @param mask The character mask to conform to. Must be nonzero or
     /// `EmptyStringMask` is thrown.
