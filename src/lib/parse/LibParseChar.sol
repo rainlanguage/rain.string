@@ -14,6 +14,8 @@ library LibParseChar {
     /// @param cursor The current position in the data.
     /// @param end The end of the data.
     /// @param mask The mask to check against.
+    /// @return The first position at or after `cursor` and at most `end` whose
+    /// char is not in the mask; `cursor` unchanged if already at or past `end`.
     function skipMask(uint256 cursor, uint256 end, uint256 mask) internal pure returns (uint256) {
         assembly ("memory-safe") {
             let inRange := lt(cursor, end)
