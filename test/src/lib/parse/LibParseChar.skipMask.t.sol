@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std-1.16.1/src/Test.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
 import {Pointer} from "rain-solmem-0.1.26/src/lib/LibPointer.sol";
@@ -44,6 +44,7 @@ contract LibParseCharSkipMaskTest is Test {
         }
         uint256 cursor = Pointer.unwrap(s.dataPointer());
         uint256 end = cursor + 32;
+        // forge-lint: disable-next-line(incorrect-shift,unsafe-typecast)
         assertEq(LibParseChar.skipMask(cursor, end, 1 << uint256(uint8(bytes1("a")))), end);
     }
 

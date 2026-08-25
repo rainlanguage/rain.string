@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity ^0.8.18;
 
-import {CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../parse/LibParseCMask.sol";
+import {CMASK_ASCII, CMASK_STRING_LITERAL_TAIL, CMASK_HEX, CMASK_WHITESPACE} from "../parse/LibParseCMask.sol";
 import {EmptyStringMask} from "../../error/ErrConform.sol";
 
 /// @title LibConformString
@@ -88,22 +88,26 @@ library LibConformString {
     }
 
     /// Conforms the string to the full ASCII character set.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToAscii(string memory str) internal pure {
-        conformStringToMask(str, type(uint128).max);
+        conformStringToMask(str, CMASK_ASCII);
     }
 
     /// Conforms the string to ASCII hex digit characters.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToHexDigits(string memory str) internal pure {
         conformStringToMask(str, CMASK_HEX);
     }
 
     /// Conforms the string to printable characters that are valid string
     /// literal content.
+    /// @param str The string to conform. This string is mutated in place.
     function conformValidPrintableStringContent(string memory str) internal pure {
         conformStringToMask(str, CMASK_STRING_LITERAL_TAIL);
     }
 
     /// Conforms the string to whitespace characters.
+    /// @param str The string to conform. This string is mutated in place.
     function conformStringToWhitespace(string memory str) internal pure {
         conformStringToMask(str, CMASK_WHITESPACE);
     }

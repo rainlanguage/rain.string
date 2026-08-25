@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std-1.16.1/src/Test.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {
     CMASK_NULL,
@@ -133,6 +133,7 @@ import {
     CMASK_RIGHT_CURLY_BRACKET,
     CMASK_TILDE,
     CMASK_DELETE,
+    CMASK_ASCII,
     CMASK_PRINTABLE,
     CMASK_NUMERIC_0_9,
     CMASK_E_NOTATION,
@@ -188,6 +189,7 @@ contract LibParseCMaskTest is Test {
     /// inclusive range [lo, hi].
     function rangeMask(uint256 lo, uint256 hi) internal pure returns (uint256 mask) {
         for (uint256 i = lo; i <= hi; i++) {
+            // forge-lint: disable-next-line(incorrect-shift)
             mask |= 1 << i;
         }
     }
@@ -346,6 +348,12 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_HEX, rangeMask(0x30, 0x39) | rangeMask(0x61, 0x66) | rangeMask(0x41, 0x46));
     }
 
+    /// The ASCII domain is every 7-bit byte 0x00-0x7F: the low 128 bits set
+    /// and no bit at or above 0x80.
+    function testCMaskAscii() external pure {
+        assertEq(CMASK_ASCII, rangeMask(0x00, 0x7F));
+    }
+
     /// Printable ASCII is space up to tilde: DEL 0x7F is excluded and no bit
     /// at or above 0x80 is set.
     function testCMaskPrintable() external pure {
@@ -413,6 +421,7 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_IDENTIFIER_TAIL | CMASK_NOT_IDENTIFIER_TAIL, type(uint256).max);
         assertEq(CMASK_IDENTIFIER_TAIL & CMASK_NOT_IDENTIFIER_TAIL, 0);
         for (uint256 c = 0x80; c <= 0xFF; c++) {
+            // forge-lint: disable-next-line(incorrect-shift)
             assertEq((1 << c) & CMASK_NOT_IDENTIFIER_TAIL, 1 << c);
         }
     }

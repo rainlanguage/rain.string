@@ -11,6 +11,9 @@ import {
     ZeroStringStartPointer
 } from "../../error/ErrParse.sol";
 
+/// @title LibParseDecimal
+/// @notice Decimal ASCII to integer conversion over raw memory regions,
+/// reporting failures as bare error selectors instead of reverting.
 library LibParseDecimal {
     /// @notice Convert a decimal ASCII string in a memory region to a `uint256`
     /// integer.
@@ -128,6 +131,8 @@ library LibParseDecimal {
     /// it is checked to be a decimal character `0`-`9` by the unsigned
     /// conversion, so any other byte anywhere in the region yields
     /// `ParseInvalidDecimalChar`.
+    /// A region holding only a negative sign has no digits after the sign, so
+    /// it reports `ParseEmptyDecimalString`.
     /// DOES check for signed integer overflow.
     /// `unsafe` refers to the pointers: `start` and `end` are read as raw
     /// memory addresses with no bounds or ownership checks, so the caller is

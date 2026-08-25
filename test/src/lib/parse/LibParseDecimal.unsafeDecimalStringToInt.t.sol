@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std-1.16.1/src/Test.sol";
-import {Strings} from "@openzeppelin-contracts-5.6.1/utils/Strings.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {Strings} from "@openzeppelin-contracts-5.7.0/utils/Strings.sol";
 import {LibBytes, Pointer} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
 import {LibParseDecimal} from "../../../../src/lib/parse/LibParseDecimal.sol";
 import {LibParseDecimalSlow} from "../../../lib/parse/LibParseDecimalSlow.sol";
@@ -15,7 +15,7 @@ import {
 } from "../../../../src/error/ErrParse.sol";
 
 /// @title TestLibParseDecimalUnsafeDecimalStringToInt
-/// @dev Test `TestLibParseDecimal.unsafeDecimalStringToInt`
+/// @dev Test `LibParseDecimal.unsafeDecimalStringToInt`
 contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     using Strings for uint256;
     using LibBytes for bytes;
@@ -35,6 +35,16 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
     function testUnsafeDecimalStrToIntEmpty(uint256 start, uint256 end) external pure {
         start = bound(start, end, type(uint256).max);
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(start, end);
+        assertEq(errorSelector, ParseEmptyDecimalString.selector);
+        assertEq(result, 0);
+    }
+
+    /// An empty region starting at pointer zero is reported as an empty
+    /// decimal string rather than reverting as a zero start pointer: the
+    /// emptiness check runs first. The signed conversion pins the same
+    /// ordering.
+    function testUnsafeDecimalStrToIntZeroStartEmpty() external pure {
+        (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(0, 0);
         assertEq(errorSelector, ParseEmptyDecimalString.selector);
         assertEq(result, 0);
     }
@@ -73,7 +83,7 @@ contract TestLibParseDecimalUnsafeDecimalStringToInt is Test {
             bytes(leadingZeros)[i] = "0";
         }
 
-        string memory input = string(abi.encodePacked(strHigh, strLow));
+        string memory input = string(abi.encodePacked(leadingZeros, strHigh, strLow));
 
         (bytes4 errorSelector, uint256 result) = LibParseDecimal.unsafeDecimalStringToInt(
             Pointer.unwrap(bytes(input).dataPointer()), Pointer.unwrap(bytes(input).endDataPointer())

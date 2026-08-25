@@ -2,8 +2,8 @@
 // SPDX-FileCopyrightText: Copyright (c) 2020 Rain Open Source Software Ltd
 pragma solidity =0.8.25;
 
-import {Test} from "forge-std-1.16.1/src/Test.sol";
-import {stdError} from "forge-std-1.16.1/src/StdError.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {stdError} from "forge-std-1.16.2/src/StdError.sol";
 
 import {LibConformString} from "../../../../src/lib/mut/LibConformString.sol";
 import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
@@ -165,9 +165,13 @@ contract LibConformStringTest is Test {
         string memory s = string(b);
         LibConformString.conformStringToHexDigits(s);
         // Hex digits are already in the mask so are byte-identical.
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[0]), uint8(bytes1("0")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[1]), uint8(bytes1("f")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[2]), uint8(bytes1("A")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[3]), uint8(bytes1("F")));
         for (uint256 i = 0; i < bytes(s).length; i++) {
             uint256 char = uint256(uint8(bytes(s)[i]));
@@ -190,7 +194,9 @@ contract LibConformStringTest is Test {
         }
         // Valid literal tail characters are already in the mask so are
         // byte-identical.
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[3]), uint8(bytes1("a")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[4]), uint8(bytes1("A")));
     }
 
@@ -219,12 +225,16 @@ contract LibConformStringTest is Test {
         string memory s = "abcd";
         LibConformString.corruptSingleChar(s, 2);
         assertEq(bytes(s).length, 4);
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[0]), uint8(bytes1("a")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[1]), uint8(bytes1("b")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[3]), uint8(bytes1("d")));
         uint256 char = uint256(uint8(bytes(s)[2]));
         // forge-lint: disable-next-line(incorrect-shift)
         assertTrue((1 << char) & uint256(CMASK_STRING_LITERAL_TAIL) == 0);
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertTrue(char != uint256(uint8(bytes1("\""))));
     }
 
@@ -234,10 +244,12 @@ contract LibConformStringTest is Test {
         string memory s = "\"\"";
         LibConformString.corruptSingleChar(s, 0);
         uint256 char = uint256(uint8(bytes(s)[0]));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertTrue(char != uint256(uint8(bytes1("\""))));
         // forge-lint: disable-next-line(incorrect-shift)
         assertTrue((1 << char) & uint256(CMASK_STRING_LITERAL_TAIL) == 0);
         // The sibling byte is untouched.
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(bytes(s)[1]), uint8(bytes1("\"")));
     }
 
@@ -278,6 +290,7 @@ contract LibConformStringTest is Test {
             uint256 char = uint256(uint8(bytes(s)[0]));
             // forge-lint: disable-next-line(incorrect-shift)
             assertTrue((1 << char) & uint256(CMASK_STRING_LITERAL_TAIL) == 0);
+            // forge-lint: disable-next-line(unsafe-typecast)
             assertTrue(char != uint256(uint8(bytes1("\""))));
             if (char >= 0x80) {
                 highByteCount++;
@@ -323,7 +336,9 @@ contract LibConformStringTest is Test {
     /// walks reroll. Expected values come from a keccak walk computed with
     /// cast, outside the implementation.
     function testCharFromMaskRerollUsesFullSeed() external pure {
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(LibConformString.charFromMask(0x01, uint256(CMASK_HEX))), uint8(bytes1("d")));
+        // forge-lint: disable-next-line(unsafe-typecast)
         assertEq(uint8(LibConformString.charFromMask(0x0101, uint256(CMASK_HEX))), uint8(bytes1("2")));
     }
 

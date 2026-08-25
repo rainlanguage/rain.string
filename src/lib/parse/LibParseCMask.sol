@@ -7,9 +7,6 @@ pragma solidity ^0.8.25;
 // contains 7-bit ASCII bytes only, so bits 0x80-0xFF are unset, except
 // CMASK_NOT_IDENTIFIER_TAIL, whose complement includes bytes 0x80-0xFF.
 
-/// @dev Workaround for https://github.com/foundry-rs/foundry/issues/6572
-contract LibParseCMask {}
-
 /// @dev ASCII null
 // forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant CMASK_NULL = uint256(1) << uint256(uint8(bytes1("\x00")));
@@ -522,10 +519,12 @@ uint256 constant CMASK_TILDE = uint256(1) << uint256(uint8(bytes1("~")));
 // forge-lint: disable-next-line(unsafe-typecast)
 uint256 constant CMASK_DELETE = uint256(1) << uint256(uint8(bytes1("\x7F")));
 
+/// @dev Every 7-bit ASCII byte 0x00-0x7F.
+uint256 constant CMASK_ASCII = type(uint128).max;
+
 /// @dev ASCII printable characters is 0x20-0x7E inclusive. The uint256
 /// complement of the control characters sets every bit for 0x80-0xFF, which
-/// would mark all high bytes printable; the clip to type(uint128).max removes
-/// them.
+/// would mark all high bytes printable; the clip to CMASK_ASCII removes them.
 uint256 constant CMASK_PRINTABLE =
     ~(CMASK_NULL
             | CMASK_START_OF_HEADING
@@ -559,7 +558,7 @@ uint256 constant CMASK_PRINTABLE =
             | CMASK_GROUP_SEPARATOR
             | CMASK_RECORD_SEPARATOR
             | CMASK_UNIT_SEPARATOR
-            | CMASK_DELETE) & type(uint128).max;
+            | CMASK_DELETE) & CMASK_ASCII;
 
 /// @dev numeric 0-9
 uint256 constant CMASK_NUMERIC_0_9 = CMASK_ZERO | CMASK_ONE | CMASK_TWO | CMASK_THREE | CMASK_FOUR | CMASK_FIVE
