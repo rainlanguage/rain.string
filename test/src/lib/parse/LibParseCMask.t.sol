@@ -174,8 +174,8 @@ import {
     LITERAL_HEX_DISPATCH_START_SEQUENCE
 } from "../../../../src/lib/parse/LibParseCMask.sol";
 import {LibParseChar} from "../../../../src/lib/parse/LibParseChar.sol";
-import {Pointer} from "rain-solmem-0.1.26/src/lib/LibPointer.sol";
-import {LibBytes} from "rain-solmem-0.1.26/src/lib/LibBytes.sol";
+import {Pointer} from "rain-solmem-0.1.28/src/lib/LibPointer.sol";
+import {LibBytes} from "rain-solmem-0.1.28/src/lib/LibBytes.sol";
 
 /// @title LibParseCMaskTest
 /// @notice Pins every character mask constant to its ASCII semantics. Expected
