@@ -148,4 +148,20 @@ contract LibStringSetTest is Test {
         }
         assertFalse(LibStringSet.holds(haystack, string(new bytes(longest + 1))));
     }
+
+    /// The bytes past a string.s length are not guaranteed to be zero, so two
+    /// strings of the same length and content are equal however much their
+    /// final words differ beyond it.
+    function testHoldsIgnoresWhatFollowsTheContent() external pure {
+        string memory dirty = "abc";
+        string memory clean = "abc";
+        assembly ("memory-safe") {
+            mstore(add(dirty, 0x20), or(mload(add(dirty, 0x20)), 0x0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff))
+            mstore(add(clean, 0x20), and(mload(add(clean, 0x20)), not(0x0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff)))
+        }
+        string[] memory haystack = new string[](1);
+        haystack[0] = dirty;
+        assertTrue(LibStringSet.holds(haystack, clean));
+        assertFalse(LibStringSet.holds(haystack, "abd"));
+    }
 }
