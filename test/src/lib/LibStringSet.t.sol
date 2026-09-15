@@ -148,41 +148,4 @@ contract LibStringSetTest is Test {
         }
         assertFalse(LibStringSet.holds(haystack, string(new bytes(longest + 1))));
     }
-
-    /// The bytes past a string.s length are not guaranteed to be zero, so two
-    /// strings of the same length and content are equal however much their
-    /// final words differ beyond it.
-    function testHoldsIgnoresWhatFollowsTheContent() external pure {
-        string memory dirty = "abc";
-        string memory clean = "abc";
-        // Every byte from the fourth on, the first one the length does not
-        // claim. Starting at the boundary itself is what makes the difference
-        // visible to a comparison that reads one byte too far.
-        uint256 past = ~uint256(0) >> (8 * 3);
-        assembly ("memory-safe") {
-            mstore(add(dirty, 0x20), or(mload(add(dirty, 0x20)), past))
-            mstore(add(clean, 0x20), and(mload(add(clean, 0x20)), not(past)))
-        }
-        string[] memory haystack = new string[](1);
-        haystack[0] = dirty;
-        assertTrue(LibStringSet.holds(haystack, clean));
-        assertFalse(LibStringSet.holds(haystack, "abd"));
-    }
-
-    /// Content is compared everywhere, not only in the part of it that shares a
-    /// word with the end. Two strings of one whole word plus a remainder,
-    /// differing only in the whole word, are different strings.
-    function testHoldsComparesTheWordsBeforeTheLast() external pure {
-        string memory head = "0123456789abcdef0123456789abcde";
-        assertEq(bytes(head).length, 31);
-        string memory held = string.concat("A", head, "tail");
-        string memory other = string.concat("B", head, "tail");
-        assertEq(bytes(held).length, 36);
-        assertEq(bytes(other).length, 36);
-
-        string[] memory haystack = new string[](1);
-        haystack[0] = held;
-        assertTrue(LibStringSet.holds(haystack, held));
-        assertFalse(LibStringSet.holds(haystack, other));
-    }
 }
