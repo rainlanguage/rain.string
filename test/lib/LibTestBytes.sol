@@ -9,7 +9,7 @@ library LibTestBytes {
     function sequence(uint256 length, uint8 start) internal pure returns (bytes memory b) {
         b = new bytes(length);
         for (uint256 i = 0; i < length; i++) {
-            b[i] = bytes1(uint8(start + i));
+            b[i] = bytes1(uint8((start + i) & 0xff));
         }
     }
 
