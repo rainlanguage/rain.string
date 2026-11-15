@@ -24,11 +24,10 @@ library LibAffix {
             let length := mload(suffix)
             let dataLength := mload(data)
             if iszero(gt(length, dataLength)) {
-                result :=
-                    eq(
-                        keccak256(add(add(data, 0x20), sub(dataLength, length)), length),
-                        keccak256(add(suffix, 0x20), length)
-                    )
+                result := eq(
+                    keccak256(add(add(data, 0x20), sub(dataLength, length)), length),
+                    keccak256(add(suffix, 0x20), length)
+                )
             }
         }
         return result;
