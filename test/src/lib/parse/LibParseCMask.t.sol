@@ -158,6 +158,7 @@ import {
     CMASK_NOT_IDENTIFIER_TAIL,
     CMASK_WHITESPACE,
     CMASK_LHS_STACK_DELIMITER,
+    CMASK_ASCII_WHITESPACE,
     CMASK_NUMERIC_LITERAL_HEAD,
     CMASK_STRING_LITERAL_HEAD,
     CMASK_SUB_PARSEABLE_LITERAL_HEAD,
@@ -388,6 +389,15 @@ contract LibParseCMaskTest is Test {
         assertEq(CMASK_WHITESPACE, whitespace);
         assertEq(CMASK_LHS_STACK_DELIMITER, whitespace);
         assertEq(CMASK_INTERSTITIAL_HEAD, whitespace | (1 << 0x2F)); // whitespace /
+    }
+
+    /// Rust's u8::is_ascii_whitespace set: \t \n \x0C \r space, over every byte 0x00-0xFF.
+    function testCMaskAsciiWhitespace() external pure {
+        for (uint256 b = 0; b <= 0xFF; b++) {
+            bool expected = b == 0x09 || b == 0x0A || b == 0x0C || b == 0x0D || b == 0x20;
+            // forge-lint: disable-next-line(incorrect-shift)
+            assertEq((1 << b) & CMASK_ASCII_WHITESPACE != 0, expected);
+        }
     }
 
     /// Rainlang literal character masks.

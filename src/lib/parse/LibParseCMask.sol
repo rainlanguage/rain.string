@@ -641,6 +641,9 @@ uint256 constant CMASK_WHITESPACE = CMASK_LINE_FEED | CMASK_CARRIAGE_RETURN | CM
 /// @dev Rainlang stack item delimiter is whitespace
 uint256 constant CMASK_LHS_STACK_DELIMITER = CMASK_WHITESPACE;
 
+/// @dev ASCII whitespace as Rust's u8::is_ascii_whitespace: \t \n \x0C \r space
+uint256 constant CMASK_ASCII_WHITESPACE = CMASK_WHITESPACE | CMASK_FORM_FEED;
+
 /// @dev Rainlang supports numeric literals as anything starting with 0-9 or -
 uint256 constant CMASK_NUMERIC_LITERAL_HEAD = CMASK_NUMERIC_0_9 | CMASK_NEGATIVE_SIGN;
 
